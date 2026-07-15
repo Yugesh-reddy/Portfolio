@@ -1,0 +1,54 @@
+import type { NextConfig } from "next"
+
+const nextConfig: NextConfig = {
+  reactStrictMode: true,
+  transpilePackages: ["next-mdx-remote"],
+  allowedDevOrigins: [],
+  devIndicators: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        port: "",
+      },
+    ],
+    qualities: [75, 100],
+  },
+  compiler:
+    process.env.NODE_ENV === "production"
+      ? {
+          removeConsole: {
+            exclude: ["error"],
+          },
+        }
+      : undefined,
+  async redirects() {
+    return []
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/blog/:slug.mdx",
+        destination: "/doc.mdx/:slug",
+      },
+      {
+        source: "/blog/:slug",
+        destination: "/doc.mdx/:slug",
+        has: [
+          {
+            type: "header",
+            key: "accept",
+            value: "(?<accept>.*text/markdown.*)",
+          },
+        ],
+      },
+      {
+        source: "/rss",
+        destination: "/blog/rss",
+      },
+    ]
+  },
+}
+
+export default nextConfig
