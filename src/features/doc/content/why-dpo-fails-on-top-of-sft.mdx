@@ -1,0 +1,138 @@
+---
+title: "Why DPO sometimes makes safety worse: a cautionary result"
+description: "DPO is widely treated as the over-refusal-correction step that follows safety SFT. We layered it on a model that was already safe and helpful — and it regressed safety by 15 points. Here's the mechanism, and the rule it implies."
+category: engineering
+createdAt: 2026-06-24
+updatedAt: 2026-06-24
+---
+
+Direct Preference Optimization (DPO) has a near-canonical place in the alignment
+pipeline: you do safety SFT to make the model refuse harmful requests, the model
+ends up over-refusing benign ones, and DPO corrects that over-refusal while
+preserving safety. It is a stable, well-loved recipe.
+
+In the MediCS project — defending a medical LLM against multilingual
+code-switching jailbreaks — I added DPO on top of a working SFT checkpoint
+expecting a small win. Instead it **regressed safety by 15 percentage points**.
+This post is about why that happened, because the failure is more instructive
+than a success would have been.
+
+---
+
+## The setup, and the number
+
+The defense is a single-phase QLoRA supervised fine-tune of `Llama-3-8B-Instruct`
+on red-team output. Under a black-box threat model, evaluated on a 533-prompt
+held-out pool over three seeds, SFT alone is a strong result:
+
+| Stage | Attack Success Rate | Helpfulness Retention | False-Refusal Rate |
+|---|---|---|---|
+| Base | 27.58% | 98.73% | 1.27% |
+| **SFT** | **6.38%** | **99.60%** | **0.40%** |
+| SFT + DPO | 21.45% | 98.87% | 1.13% |
+
+SFT cuts attack success by **−21.2 points** (paired bootstrap 95% CI
+[−23.5, −18.9], significant at *p* < 10⁻⁹ in every one of the six languages) — and
+it does so while helpfulness *improves* and false refusals *drop*. The model
+becomes strictly safer **and** strictly more helpful.
+
+Then we layered DPO on that checkpoint, with preference pairs that preferred safe
+refusals over harmful responses on the attack pool, and helpful answers over
+refusals on the benign-twin pool. Attack success climbed from 6.38% back up to
+**21.5%** — a +15.07-point regression (Cohen's *h* = −0.45), undoing roughly
+three-quarters of the safety SFT had bought.
+
+---
+
+## Why it happened: the missing premise
+
+The conventional DPO-after-SFT recipe rests on a premise that is almost never
+stated out loud: **SFT introduced over-refusal that DPO can push back against.**
+DPO's contrastive objective needs something to pull *toward* on the benign side.
+If the model is already refusing benign queries too often, "prefer the helpful
+answer" has a clear target and a real gradient.
+
+Our SFT step never introduced that pathology. Helpfulness retention was 99.6%
+and the false-refusal rate was 0.4% — there was essentially no over-refusal to
+correct. So DPO's benign-side objective had **no over-refusal anchor to push
+against**. With nothing to pull toward on the helpful side, the optimizer's
+remaining pressure pulled the model back toward compliance — and "compliance" on
+an adversarial medical pool means answering jailbreaks.
+
+The regression was not uniform. It concentrated exactly in the highest-stakes
+categories: toxicology rose from 17.9% to 41.8% attack success, unlicensed
+practice from 4.9% to 33.3%. The categories DPO damaged most are the ones a
+medical deployment can least afford to lose.
+
+A second, compounding factor: **adapter stacking.** Our DPO ran as a rank-8 LoRA
+adapter on top of a rank-32 SFT adapter. A low-rank update applied over a
+higher-rank one, for a single epoch, would not be expected to dominate in
+expectation — yet the safety surface visibly eroded. We can't fully disentangle
+the missing-premise explanation from the stacking artifact without two more
+ablations (a DPO run on a deliberately over-refusing SFT, and a DPO run on a
+fresh full-rank adapter), so we report both as hypotheses rather than a proven
+single cause.
+
+---
+
+## This isn't an isolated quirk — it's the SFT-vs-DPO story in reverse
+
+There's a clean way to see why SFT-then-DPO normally works, and why it can
+backfire. **SFT trains only on a positive signal**: produce responses that look
+like the safe demonstrations. It has no way to distinguish "safe" from "safe and
+helpful," so a model can satisfy the SFT objective by becoming more
+refusal-prone in general — which is where the over-refusal comes from. **DPO adds
+a contrastive signal**: for every preferred response there is a dispreferred one,
+and the loss explicitly pushes away from the latter while pulling toward the
+former.
+
+When SFT *has* induced over-refusal, that contrastive signal is corrective —
+which is exactly why, in the general-domain literature, DPO
+([Rafailov et al., 2023](https://arxiv.org/abs/2305.18290)) applied over an SFT
+checkpoint reduces harm by ~55% *and* improves utility, while DPO that skips the
+SFT step barely moves utility at all ([Aakanksha et al., 2024](https://aclanthology.org/2024.emnlp-main.671/)).
+The SFT checkpoint isn't just a warm start;
+it seeds the very distribution DPO refines, including the over-refusal that gives
+DPO's benign objective its purchase.
+
+Flip the premise — an SFT checkpoint with no over-refusal — and the same
+contrastive machinery has nothing to correct on the helpful side, so its net
+effect is to drift the model back toward compliance. Same algorithm, opposite
+outcome, entirely determined by whether the precondition held.
+
+---
+
+## The rule this implies
+
+The practical lesson is narrow and actionable:
+
+> **Verify the premise of a fine-tuning stage before stacking the next one on
+> top.** DPO should not be applied when the SFT step did not introduce measurable
+> over-refusal. Check your false-refusal rate first; if the model isn't
+> over-refusing, the preference objective has no counterweight against
+> compliance drift, and it will pull safety the wrong way.
+
+So MediCS reports **SFT alone as the headline defense, and DPO as a cautionary
+finding** — not because DPO is bad, but because applying it reflexively, without
+checking whether its precondition holds, is. A negative result that you can
+explain mechanistically is worth more than a positive one you can't.
+
+---
+
+This work sits inside a larger effort on multilingual medical safety — see
+[why these code-switching jailbreaks are a serious problem](/blog/medical-code-switching-jailbreaks)
+for the stakes, and [the adaptive red-team attacker](/blog/adaptive-red-team-attacker)
+that generated the jailbreaks this defense was trained against.
+
+---
+
+## References
+
+1. Rafael Rafailov, Archit Sharma, Eric Mitchell, Stefano Ermon, Christopher D.
+   Manning, Chelsea Finn. **Direct Preference Optimization: Your Language Model is
+   Secretly a Reward Model.** NeurIPS 2023.
+   [arXiv:2305.18290](https://arxiv.org/abs/2305.18290)
+2. Aakanksha, Arash Ahmadian, Beyza Ermis, et al. **The Multilingual Alignment
+   Prism: Aligning Global and Local Preferences to Reduce Harm.** EMNLP 2024 —
+   source of the general-domain DPO(SFT) vs. DPO(IFT) result.
+   [aclanthology.org/2024.emnlp-main.671](https://aclanthology.org/2024.emnlp-main.671/)
