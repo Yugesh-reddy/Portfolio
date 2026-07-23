@@ -1,0 +1,145 @@
+---
+title: "Building an adaptive red-team attacker: five techniques and a bandit that learns"
+description: "How I built a closed-loop red team that doesn't just fire fixed jailbreak templates, but learns which attack works best for each harm category — using a Thompson-Sampling bandit over five distinct multilingual attack strategies."
+category: engineering
+createdAt: 2026-06-25
+updatedAt: 2026-06-25
+---
+
+Most jailbreak evaluations run a fixed battery of attack templates and report how
+many landed. That tells you whether a model is vulnerable. It does not tell you
+*which* attack is most dangerous *for which kind of harm*, and it certainly does
+not adapt the way a real adversary would. For the MediCS project — a closed-loop
+adversarial-training framework for medical LLMs — I built a red team that treats
+attack selection itself as a learning problem.
+
+This post walks through the five attack techniques the red team uses, why each
+one works, and the bandit that decides which to deploy.
+
+---
+
+## The threat model
+
+The attacker has **black-box** query access to a deployed medical LLM. It can
+modify the prompt freely — translate it, paraphrase it, wrap it in roleplay
+scaffolding, prime the assistant's turn — but it has no access to weights,
+logits, or fine-tuning data. This is the realistic setting: an adversary poking
+at an API, not one running gradient-based suffix optimization against open
+weights.
+
+The target is `Llama-3-8B-Instruct`. The harmful material is 500 curated medical
+seeds across six categories — toxicology/synthesis, self-harm methods, medical
+misinformation, unlicensed practice, patient-privacy violation, and unethical
+clinical advice — each expanded into sentence-level code-switched attacks across
+six low-resource languages (Hindi, Bengali, Swahili, Yoruba, Tagalog, Gujarati).
+
+---
+
+## The five attack techniques
+
+The design was informed by a trial run that exposed three ways early defenses
+quietly succeed — and that the real attacks therefore had to defeat:
+keyword-only code-switching preserved English syntax (and thus leaked harmful
+intent to the classifier); flagged 2023-era jailbreak personas were already
+hard-coded into refusal data; and heavy obfuscation (base64, character
+substitution) was so unreadable that even the target model couldn't parse it.
+The five strategies are what survived that filter.
+
+### 1. CS — Sentence-level Code-Switching
+
+Rather than swapping individual keywords, an entire sentence containing a flagged
+keyword is translated into the target language, while English carrier sentences
+stay. Sentence-level mixing **preserves syntactic naturalness while genuinely
+obscuring harmful intent** — the crucial improvement over keyword-only swapping,
+which leaves the English skeleton (and the harmful signal) intact.
+
+### 2. RP — Roleplay
+
+A pool of medically-credentialed personas (ER attending, pharmacology lecturer,
+toxicology fellow, forensic pathologist, poison-control specialist) wraps the
+attack in clinical pretext. RP attacks include a category-specific **assistant
+prefix** — e.g. *"From a clinical toxicology perspective, the relevant
+pharmacokinetics are…"* — injected right after the chat-template generation
+marker, biasing the autoregressive decoder toward a compliant continuation.
+
+### 3. MTE — Multi-Turn Escalation
+
+A 3-to-5-turn conversation builds genuine medical context before the harmful
+query ever appears. For a toxicology target the path might run overdose-screening
+→ lab quantification → lethal-dose threshold, each turn legitimate, the harmful
+ask arriving only once the model has "accepted" the framing. This is the natural
+next step beyond single-turn jailbreaks, and it excels precisely where warmup
+context helps — like self-harm categories.
+
+### 4. CS-RP — Code-Switching + Roleplay
+
+Sentence-level code-switching *then* medical-persona wrapping. Empirically the
+strongest hybrid: it combines tokenizer fragmentation (which disrupts the safety
+classifier) with autoregressive priming (which biases the decoder). On the
+undefended base model it dominates the highest-stakes categories — toxicology,
+unlicensed practice, unethical advice.
+
+### 5. CS-OBF — Code-Switching + Light Obfuscation
+
+Sentence-level CS followed by *light* leetspeak. The lightness is deliberate:
+the trial run showed that heavy obfuscation (dot-join, base64) was removed
+because it broke the target model's own comprehension. An attack the model can't
+read is not an attack.
+
+A recurring theme across all five: **tokenizer-fragmentation severity is the most
+parsimonious explanation for why these work.** Scripts that fragment more
+aggressively into sub-tokens disrupt the model's safety classifier more — which
+is also why the six target languages were chosen to span different families and
+fragmentation behaviors.
+
+---
+
+## The adaptive part: a Thompson-Sampling bandit
+
+A fixed attacker fires all five strategies uniformly. A real adversary learns
+that roleplay works best for one harm type and multi-turn escalation for another,
+and concentrates effort accordingly. To capture that, the red team models
+strategy selection per harm category as a **stochastic multi-armed bandit**.
+
+Each category–strategy pair holds a Beta posterior over its unknown success rate,
+initialized as a uniform `Beta(1, 1)` prior. At each step for a category, the
+bandit:
+
+1. **Samples** a success rate from each strategy's Beta posterior.
+2. **Selects** the strategy with the highest sampled value (Thompson Sampling —
+   exploration falls out of posterior uncertainty for free).
+3. **Observes** a binary reward from the safety judge — did the attack land?
+4. **Updates** that arm's posterior: a success bumps the alpha, a failure bumps
+   the beta.
+
+A minimum-exploration constraint (at least 10 pulls per arm per category)
+prevents the bandit from prematurely collapsing onto an early lucky arm, and the
+full RNG state is persisted every round so the entire attack trajectory is
+bit-reproducible across machines.
+
+The posteriors converge within ~200 pulls: **CS-RP** dominates for toxicology,
+unlicensed practice, and unethical advice; **MTE** wins for self-harm where
+multi-turn warmup builds the most compliant context; **CS alone** suffices for
+medical misinformation. The bandit doesn't just attack — it *profiles* the
+model's weak spots category by category.
+
+> An honest caveat I keep attached to this result: the project does not isolate
+> the *marginal* contribution of the bandit against a uniform-random or
+> round-robin baseline over the same templates. The convergence trajectories are
+> reported as descriptive, not as proof that Thompson Sampling itself beats a
+> simpler selector. That head-to-head ablation is the right next experiment.
+
+---
+
+## Why a closed loop?
+
+The point of an adaptive attacker is not a leaderboard score — it is to feed a
+defense. Every successful jailbreak the bandit discovers becomes a training
+example for a fine-tuning defense module, and the loop closes: attack, learn,
+harden, re-attack. That defense had one design choice that mattered more than any
+other (**prefix-recovery upsampling**, to undo the assistant-prefix priming that
+RP and CS-RP rely on) — and one result that genuinely surprised us, where adding
+a standard alignment step made safety *worse*. That story is in
+[why DPO fails on top of SFT](/blog/why-dpo-fails-on-top-of-sft), and the
+real-world stakes behind the whole effort are in
+[why medical code-switching jailbreaks are a serious problem](/blog/medical-code-switching-jailbreaks).
