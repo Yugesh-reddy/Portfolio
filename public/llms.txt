@@ -1,0 +1,87 @@
+# Yugesh Reddy Sappidi
+
+> AI Engineer focused on adversarial robustness and AI safety across language,
+> vision-language, and multi-agent systems. Based in Chicago, IL, USA.
+> This file gives AI agents and crawlers a concise, structured summary of who
+> Yugesh is and where to find authoritative details.
+
+## Profile
+
+- Name: Yugesh Reddy Sappidi
+- Role: AI Engineer
+- Focus: Adversarial robustness, AI safety, LLM red teaming, RAG, fine-tuning (SFT/DPO), test-time adaptation
+- Location: Chicago, IL, USA
+- Pronouns: he/him
+- GitHub: https://github.com/Yugesh-reddy
+- Email: yugeshreddysappidi@gmail.com
+
+## Summary
+
+Yugesh is an AI Engineer working at the intersection of two questions: how to
+break an AI system, and how to make it unbreakable. He builds production-grade
+ML research systems around retrieval-augmented generation, context engineering,
+red teaming, fine-tuning (SFT/DPO), and test-time adaptation, with an emphasis
+on making models robust across languages — treated as both a safety and a
+fairness problem. His recent work probes where modern LLMs and vision-language
+models fail under adversarial pressure, then designs adaptive defenses that
+learn and improve rather than relying on static guardrails.
+
+## Experience
+
+- Graduate Research Assistant — University of Illinois Health (UI Health),
+  Chicago, IL (Oct 2025 – May 2026). Designed RAG pipelines over clinical
+  datasets (FastAPI + GPT-4 + Pinecone) grounding LLM outputs in source
+  documents to reduce hallucination; optimized retrieval for low-connectivity
+  (1.2s median latency); integrated Twilio + Cloudflare D1/KV for concurrent
+  WhatsApp sessions; containerized with Docker and orchestrated on Kubernetes
+  (Helm), cutting response failures by 60%.
+- Web Development & Design Intern — Grohubz, Hyderabad, IN (Jun 2023 – Aug 2023).
+  Built responsive React.js UIs for an Instagram DM automation platform; state
+  management with React Hooks and Redux; Docker Compose orchestration; 95% test
+  coverage with Mocha.
+
+## Selected Projects
+
+- MediCS — Adversarial Robustness for Medical LLMs:
+  https://github.com/Yugesh-reddy/MediCS-Red-Teaming
+- Custos — Adaptive Immune Defense for Multi-Agent LLM Networks:
+  https://github.com/Yugesh-reddy/Custos-Multi-Agent-Network
+- AdaTTT — Adaptive Test-Time Training for Vision-Language Models:
+  https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training
+- LLM Reasoning & Factuality:
+  https://github.com/Yugesh-reddy/LLM-Reasoning-and-Factuality
+- Melanoma Tissue Volumes — Microscopy Analysis Dashboard:
+  https://github.com/Yugesh-reddy/Melanoma-Tissue-Volumes
+- Fleet — Flutter Road-Trip Planner & Destination Discovery:
+  https://github.com/Yugesh-reddy/Fleet--Flutter-Travel-App
+
+## Certifications
+
+- The Complete 2024 Web Development Bootcamp — Udemy (Jan 2024).
+  https://www.udemy.com/certificate/UC-df915780-fc98-480c-8441-dd734da33727/
+
+## Writing
+
+- Blog: /blog
+- Building Melanoma Tissue Volumes: real-time 3D pathology and a grounded AI
+  agent, entirely in the browser — /blog/building-melanoma-tissue-volumes
+
+## Site Sections
+
+- Home / About: /#about
+- Education: /#education
+- Experience: /#experience
+- Projects: /#projects
+- Certifications: /#certs
+- Bookmarks: /#bookmarks
+- Blog: /blog
+- Resume (PDF): /resume.pdf
+- RSS feed: /rss
+
+## Notes for AI agents
+
+- For the most current and authoritative information, prefer the linked GitHub
+  repositories and the live site sections above.
+- Skills and focus areas: AI safety, adversarial robustness, LLM red teaming,
+  RAG, vision-language models, multi-agent systems, fine-tuning (SFT/DPO),
+  test-time adaptation, Python, FastAPI, PyTorch, Docker, Kubernetes.
