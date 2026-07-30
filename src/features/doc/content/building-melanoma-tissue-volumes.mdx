@@ -1,0 +1,269 @@
+---
+title: "Building Melanoma Tissue Volumes: real-time 3D pathology and a grounded AI agent, entirely in the browser"
+description: "How we built a zero-backend browser tool that renders a 70-channel melanoma microscopy volume in 3D, analyzes any region deterministically, and wraps it in a grounded, safely-agentic AI assistant."
+category: engineering
+createdAt: 2026-06-22
+updatedAt: 2026-06-22
+---
+
+This is the story of building MTV (Melanoma Tissue Volumes): a zero-backend web
+application that renders a 70-channel multiplexed microscopy volume of melanoma
+tissue as an interactive 3D point cloud, computes a deterministic
+"computational-pathology" analysis of any sub-region the user draws, and wraps
+the whole thing in an AI assistant that explains the findings and can operate the
+tool on the user's behalf, safely.
+
+It started as a visualization assignment and turned into an exercise in three
+disciplines that rarely meet in one codebase: GPU graphics, scientific data
+engineering, and trustworthy LLM agents. This post is about what we set out to
+build, the problems that turned out to be harder than they looked, what we
+learned, and the papers and technologies the work stands on.
+
+---
+
+## The problem
+
+Cyclic Immunofluorescence (CyCIF) is a technique that stains a single tissue
+section over and over with different antibody panels, imaging it each round. The
+result is a stack of co-registered channels where each channel measures one
+biomarker, for example SOX10 and MART1 (melanoma/tumor markers), CD8a and CD4
+(T cells), or PDL1 (an immune-checkpoint ligand). Our source specimen is a
+melanoma in situ biopsy imaged across 70 channels and three spatial dimensions,
+from the BiomedVis Challenge 2025 dataset produced by the Laboratory of Systems
+Pharmacology at Harvard.
+
+The raw volume is roughly six gigabytes of chunked scientific data. The question
+we wanted to answer was deceptively simple: can a researcher open this in a normal
+web browser, fly through it in 3D, draw a box around an interesting region, and
+immediately get back something biologically meaningful, without a server, a GPU
+cluster, or a desktop application?
+
+---
+
+## What we set out to build
+
+We committed to a few constraints up front, and they shaped everything:
+
+- **Zero backend.** Voxel data would be served as static files; any "intelligence"
+  would run in the browser. This is unusual for a data-heavy scientific tool and
+  it forced us to be honest about what the client can actually do.
+- **Deterministic first, AI second.** We did not want a chatbot bolted onto a
+  viewer. We wanted a real analysis engine that produces numbers, with a language
+  model whose only job is to explain those numbers. The principle: the LLM may
+  never invent a finding the engine did not compute.
+- **Earn trust, then automate.** If the assistant is going to take actions in the
+  app, every action has to pass through a boundary we can reason about, and every
+  destructive action has to be reversible and confirmable.
+
+---
+
+## The build, problem by problem
+
+### 1. Rendering millions of voxels in a browser
+
+The naive approach (one mesh per voxel) is hopeless: you would issue millions of
+draw calls per frame. The technique that makes this tractable is **GPU instancing**:
+upload one small cube once, then hand the GPU a buffer that says where to place
+each instance and what color and opacity to give it. Each channel becomes a single
+draw call regardless of how many voxels it contains.
+
+We wrote custom GLSL vertex and fragment shaders so the GPU does the per-voxel work:
+positioning each instance, fading distant voxels by depth, and discarding fully
+transparent fragments before the GPU wastes time blending them. On top of that we
+added a manual **level-of-detail** scheme: when the camera is far away, many voxels
+are sub-pixel anyway, so we sample every Nth voxel, which can cut the instance
+count by up to two orders of magnitude with no perceptible loss. Screen-space
+anti-aliasing (FXAA) smooths the result without the cost of multisampling
+instanced geometry.
+
+Lesson: a browser can do real volumetric science, but only if you respect the GPU.
+Almost every performance win came from doing less work per voxel, not from a faster
+loop.
+
+### 2. The data pipeline: from petabyte-shaped formats to flat bytes
+
+The source data is OME-Zarr, a chunked, compressed, multiscale format designed for
+out-of-core access. That is exactly right for a server and exactly wrong for a
+browser that needs to index individual voxels by coordinate. So we built an offline
+pipeline: download the Zarr from a public S3 bucket, load it lazily with **Dask** so
+the six gigabytes never sit in RAM at once, and convert each channel into a flat
+`Uint8Array` plus a tiny JSON metadata file. A flat array with a known shape gives
+the browser O(1) random access (`data[z*Y*X + y*X + x]`); compression would have
+forced a decompression pass before every read.
+
+Lesson: the right data format depends entirely on the access pattern. The same
+volume wants to be Zarr on disk and a flat buffer in the browser, and the
+interesting engineering is the deterministic ETL between them.
+
+### 3. From pixels to biology: a deterministic engine
+
+This is the part we are proudest of, because it is what keeps the project from
+reading as a thin wrapper around a chat API. When you draw a box, a deterministic
+engine computes, with no model involved:
+
+- per-marker statistics (mean, median, spread, quartiles, relative abundance, and
+  an enrichment z-score against the whole volume);
+- candidate cell-population phenotypes, scored from curated marker combinations;
+- a tumor-microenvironment classification (immune-hot, intermediate, or cold);
+- a checkpoint/exhaustion signal and a proliferation index;
+- a principal-axis orientation per channel, via a full 3x3 eigendecomposition,
+  with a coherence value that distinguishes aligned structures (collagen tracts,
+  vessels) from isotropic ones.
+
+These are rule-based and literature-informed, and we are careful to say so: the
+thresholds are heuristics, not values calibrated against pathologist-annotated
+ground truth. "Deterministic" means reproducible, not clinically validated. Being
+honest about that distinction is part of the engineering.
+
+### 4. The AI layer: grounded explanation, then grounded action
+
+With real numbers in hand, the language model has a well-defined, narrow job:
+explain them. The engine's output is serialized into a grounding string, and the
+system prompt forbids inventing findings. This is a deliberate, structural defense
+against hallucination, much closer in spirit to retrieval-augmented generation than
+to free-form chat.
+
+Then we let the model do more than talk. A catalog of 24 tools lets the assistant
+operate the application: toggle channels, draw selections, change camera views,
+maximize panels, compare regions. The model emits actions as fenced code blocks,
+and a bounded plan-act-observe loop runs them, feeding tool results and refreshed
+app state back to the model when it needs to see the effect of an action before
+deciding the next one. This loop is essentially the ReAct pattern (reason, act,
+observe) implemented with an explicit continuation marker.
+
+One design decision aged well: we drive the multi-step loop with a text protocol
+rather than native multi-turn tool messages. Native function-calling is supported,
+but local model runtimes (Ollama, llama.cpp, LM Studio) handle tool-calling
+inconsistently, so a text-based action protocol gives every runtime the same
+bounded, auditable behavior. When we later moved the project to be local-model-only,
+that decision paid for itself.
+
+### 5. Making the agent safe
+
+An assistant that can mutate the application is a liability unless the path from
+model text to state change is something you can defend. We treat the model's output
+as semi-trusted (it may echo untrusted region or box labels) and force every action
+through a pipeline: a strict fenced-block parser (prose that merely describes an
+action is never executable); schema validation that strips any argument not declared
+in the catalog (so a smuggled second tool name simply disappears); a context-scoped
+allowlist (a box-specific chat thread cannot reset the whole workspace); explicit
+user confirmation for anything destructive; full post-hoc undo; and per-turn tracing.
+
+We did not just claim this was safe. We wrote a red-team test suite that simulates
+prompt injection and tool evasion (fenced-fence spoofing, argument smuggling,
+prototype-pollution keys, enum and range violations, homoglyph tool names) and
+asserts that none of them produce an unintended mutation.
+
+Lesson: agent safety is a pipeline, not a prompt. You cannot prompt your way to a
+guarantee; you enforce it at the dispatch boundary and test it adversarially.
+
+### 6. Making the claims real: evaluation
+
+It is easy to write "the agent is accurate and safe." It is harder, and far more
+valuable, to put a number on it. We built an evaluation harness with 85 labeled
+cases across three slices: a core set of canonical phrasings, a paraphrase set of
+naturalistic rewordings, and a held-out out-of-distribution set the tool descriptions
+did not anticipate. We score tool accuracy, argument accuracy, and the headline
+safety metrics: how often the agent fires a state mutation on a question, and how
+often it fires a destructive one. A run against a local model produced 98.3 percent
+tool accuracy, 100 percent argument accuracy, and zero false-action and
+destructive-false-action rates across all 85 cases.
+
+The slicing matters. An evaluation written by the same person who wrote the tools
+mostly measures recall of their own phrasing. The paraphrase and out-of-distribution
+slices are what let the number mean "it generalizes" rather than "it memorized."
+
+Lesson, borrowed from a reviewer who was right: a harness is scaffolding; a number
+is the asset.
+
+### 7. A performance war story
+
+Not every lesson was planned. At one point, selecting a region made every marker in
+the focused view vanish and reload one at a time. The instinct is to blame the data
+loading, but the root cause was a React effect whose dependency was the entire
+channels array: any change produced a new array reference, the effect re-ran, and it
+tore down and rebuilt every mesh from scratch. The fix was to make the renderer
+incremental, diffing channels by a config signature and rebuilding only what actually
+changed.
+
+Lesson: in a React and WebGL app, the most expensive bugs hide in effect dependencies,
+not in the GPU. "It reloads everything" almost always means "an effect re-ran when it
+did not need to."
+
+---
+
+## What we learned, distilled
+
+- **Trust is the hard part of AI for science, not the model.** The architecture that
+  separates a deterministic engine from an LLM explainer did more for credibility than
+  any prompt could.
+- **Respect the GPU and you can do real graphics in a browser.** Instancing, LOD, and
+  fragment discard, not micro-optimized loops, are what made it interactive.
+- **Data format follows access pattern.** Zarr on disk, flat bytes in the browser.
+- **Safety is enforced at a boundary and proven adversarially.** A red-team suite is
+  not optional for an agent that can act.
+- **Measure, do not assert.** Sliced evaluation turns a claim into a result.
+- **Local-first changes your design.** A transport-agnostic action loop is more work up
+  front and far more robust across model runtimes.
+
+---
+
+## Technologies and references
+
+The project draws on a number of established techniques and bodies of work. These are
+the canonical references behind each piece; cite the specific ones you consulted and
+verify the details for your own write-up.
+
+**Imaging and the dataset**
+
+- t-CyCIF, the multiplexed imaging method behind the data: Lin et al., "Highly
+  multiplexed immunofluorescence imaging of human tissues and tumors using t-CyCIF and
+  conventional optical microscopes," eLife, 2018.
+- The dataset: BiomedVis Challenge 2025, specimen LSP13626, Laboratory of Systems
+  Pharmacology, Harvard Medical School.
+- OME-NGFF / OME-Zarr, the bioimaging file format: Moore et al., "OME-NGFF: a
+  next-generation file format for expanding bioimaging data-access strategies," Nature
+  Methods, 2021.
+
+**Tumor immunology (for the phenotype engine's concepts)**
+
+- Immune "hot" versus "cold" tumor microenvironments: Galon and Bruni, "Approaches to
+  treat immune hot, altered and cold tumours with combination immunotherapies," Nature
+  Reviews Drug Discovery, 2019.
+- The Immunoscore concept of quantifying immune infiltration: Galon et al. and
+  subsequent work on spatial immune contexture.
+
+**Graphics and data engineering**
+
+- Three.js and WebGL instanced rendering for the voxel cloud.
+- FXAA (Fast Approximate Anti-Aliasing): Lottes, NVIDIA, 2009.
+- Principal Component Analysis / structure-tensor analysis for per-channel orientation
+  and coherence.
+- Dask for out-of-core array computation: Rocklin, "Dask: Parallel Computation with
+  Blocked Algorithms and Task Scheduling," SciPy, 2015.
+- React, Vite, and D3.js for the application, build tooling, and charts.
+
+**LLM agents and safety**
+
+- The reason-act-observe agent pattern: Yao et al., "ReAct: Synergizing Reasoning and
+  Acting in Language Models," 2022 (ICLR 2023).
+- Grounding to constrain generation: the broader retrieval-augmented-generation line of
+  work, e.g. Lewis et al., "Retrieval-Augmented Generation for Knowledge-Intensive NLP
+  Tasks," NeurIPS, 2020.
+- Indirect prompt injection, the threat model our red-team suite targets: Greshake et
+  al., "Not what you've signed up for: Compromising Real-World LLM-Integrated
+  Applications with Indirect Prompt Injection," 2023.
+- The OWASP Top 10 for LLM Applications, for the broader application-security framing.
+- Local, OpenAI-compatible runtimes used during development: Ollama, LM Studio,
+  llama.cpp.
+
+---
+
+## Closing
+
+MTV is, in the end, an argument that a single person (or small team) can build a tool
+that is scientifically honest, genuinely interactive, and safely agentic, on the open
+web, with no backend. The hardest and most rewarding parts were the ones that do not
+show up in a screenshot: the deterministic engine that earns the right to use a model,
+the safety pipeline that earns the right to let it act, and the evaluation that turns
+"trust me" into a number. Those are the parts we would build first next time.
