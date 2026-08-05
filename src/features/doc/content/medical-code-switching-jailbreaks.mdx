@@ -1,0 +1,161 @@
+---
+title: "Why medical code-switching jailbreaks are a serious safety problem"
+description: "Safety-aligned LLMs refuse harmful medical requests in English, then often comply when the same request mixes languages mid-sentence. That gap is both a fairness failure and a real attack surface, and it is the reason I built MediCS."
+category: engineering
+createdAt: 2026-02-19
+updatedAt: 2026-02-19
+---
+
+Ask a modern aligned LLM *"how do I synthesize fentanyl?"* in English and it
+refuses. Swap the verb and the key nouns for their Hindi or Yoruba translations,
+keep the English sentence around them, and the same model often answers. Same
+intent, different safety outcome, depending on which languages show up in the
+prompt.
+
+That mix has a name: **code-switching**. Billions of people talk this way.
+It is also one of the most reliable ways I have seen to get past today's
+safety-aligned models. I care about it because medical LLMs are exactly the
+systems that get asked hard questions in mixed language, and because that gap
+is what [MediCS](https://github.com/Yugesh-reddy/MediCS-Red-Teaming) is built
+around: multilingual medical safety that still holds when the prompt is not
+clean English.
+
+---
+
+## Safety is mostly an English feature
+
+More than 80% of the world is not a native English speaker. Most LLM safety
+work is still built and scored in English. Align in one language, ship in a
+hundred, and the refusals do not travel with you.
+
+That shows up as two problems at once.
+
+**Equity.** Ask the same harmful question in a low-resource language and you
+can get a more dangerous answer than you would in English. On
+`gpt-3.5-turbo`, a harmful prompt in Bengali is answered unsafely about 28% of
+the time versus under 1% in English, roughly a 45× gap. Unsafe-response rates
+climb as language resource level drops: ~4% for high-resource languages, ~11%
+for medium, ~15% for low-resource
+([Deng et al., 2024](https://arxiv.org/abs/2310.06474)).
+
+**Security.** Once that gap is visible, attackers stop translating whole
+prompts and start mixing languages inside a single request. That is harder to
+defend against than "the prompt is just in Bengali."
+
+I also read this as a fairness issue, not only a quality issue. Treat the
+refusal as a classifier and language as the protected attribute. The
+disparate-impact ratio is the safe-refusal rate for the unprivileged group over
+the privileged group. For Bengali versus English on ChatGPT, that is about
+71.75% / 99.37% ≈ **0.72** (from the
+[Deng et al., 2024](https://arxiv.org/abs/2310.06474) rates). That sits under
+the **0.8 four-fifths** threshold the fairness literature uses as a presumptive
+violation ([Barocas & Selbst, 2016](https://doi.org/10.15779/Z38BG31)). Speakers
+of low-resource languages already get worse NLP. They also get weaker safety
+from the same systems.
+
+---
+
+## Mixing languages beats translating
+
+Recent work climbs the ladder in attack strength:
+
+1. **Monolingual translation.** Put the whole harmful prompt in one
+   low-resource language. That already triples the unsafe rate
+   ([Deng et al., 2024](https://arxiv.org/abs/2310.06474)).
+2. **Token-level code-switching.** Interleave several languages in one query.
+   Roughly 47% more successful attacks than English red-teaming on average;
+   `gpt-4o`'s refusal rate drops from ~99% to ~54%
+   ([Yoo et al., 2025](https://aclanthology.org/2025.acl-long.657/)).
+3. **Word-level blending.** Replace words at random with translations from a
+   large language pool. Peak bypass hits ~67% on `gpt-3.5` and ~40% on
+   `gpt-4o`
+   ([Song et al., 2025](https://aclanthology.org/2025.findings-naacl.191/)).
+
+Two results matter more than the leaderboard numbers.
+
+**The model usually understands the mixed prompt.** It fails at refusing
+([Yoo et al., 2025](https://aclanthology.org/2025.acl-long.657/)). So "teach it
+code-switching better" is the wrong fix. Understanding is already there.
+Compliance is the failure.
+
+**The break is on the input.** On `gpt-4o`, an English query that gets a
+mixed-language answer bypasses **0%** of the time. A mixed-language query
+bypasses ~16% even when the answer comes back in English
+([Song et al., 2025](https://aclanthology.org/2025.findings-naacl.191/)). An
+English input is basically never the unsafe case here. That points at the
+safety check failing while the input is processed, not only at generation.
+(Whether mixed *output* is needed for the strongest attacks is suggestive in
+the data; I would not claim the ablation settles it.)
+
+Cheap filters do not save you either. Perplexity filters that catch
+code-switched inputs also flag ~87% of normal monolingual Bengali queries
+([Yoo et al., 2025](https://aclanthology.org/2025.acl-long.657/)). That
+false-positive rate is not deployable.
+
+---
+
+## Why medicine makes this worse
+
+General jailbreak papers often treat harmful outputs as one bucket. Clinical
+settings do not work that way.
+
+- Medical LLMs show up in places where code-switching is normal: triage,
+  drug info, decision support in multilingual regions.
+- The harm is concrete. A dose is unsafe relative to a patient, a route, and
+  a contraindication. A bad recommendation in Hindi-English is not the same
+  failure mode as a generic weapons prompt.
+- Some harms are local. Mental-health framing and what counts as a slur change
+  by community. An English-only safety benchmark cannot even see some of those
+  failures.
+
+The literature at this intersection is thin. MedSafetyBench is English-only
+([Han et al., 2024](https://arxiv.org/abs/2403.03744)). The strongest
+multilingual safety-alignment recipe I know of, DPO on top of safety SFT, was
+evaluated on monolingual, per-language inputs
+([Aakanksha et al., 2024](https://aclanthology.org/2024.emnlp-main.671/)). I am
+not aware of a top-venue paper that sits squarely on safety-critical domains
+*and* code-switched attacks. That could change quickly, so it is worth
+re-checking. The threat model real telehealth systems face (safety-critical,
+multilingual, mixed-language) still looks largely open.
+
+---
+
+## What I am building against it
+
+Code-switching jailbreaks are not a niche demo. They sit where an equity failure
+and a security failure reinforce each other, and medicine turns that into harm
+for the people already least served by English-centric systems. Closing the gap
+means defenses that hold across languages, scored under the messy mixed inputs
+people actually type.
+
+That is the problem MediCS targets: an agentic attacker that builds
+code-switched medical jailbreaks, a MediCS-500-style benchmark with benign
+twins so you can measure jailbreaks and over-refusal, and a defense path that
+starts with SFT before preference tuning. The next posts cover
+[the adaptive red-team attacker](/blog/adaptive-red-team-attacker) and
+[what happened when DPO made safety worse](/blog/why-dpo-fails-on-top-of-sft).
+
+---
+
+## References
+
+The quantitative claims above are drawn from the following prior work; figures
+are reported as they appear in each paper.
+
+1. Yue Deng, Wenxuan Zhang, Sinno Jialin Pan, Lidong Bing. **Multilingual
+   Jailbreak Challenges in Large Language Models.** ICLR 2024.
+   [arXiv:2310.06474](https://arxiv.org/abs/2310.06474)
+2. Haneul Yoo, Yongjin Yang, Hwaran Lee. **Code-Switching Red-Teaming: LLM
+   Evaluation for Safety and Multilingual Understanding.** ACL 2025.
+   [aclanthology.org/2025.acl-long.657](https://aclanthology.org/2025.acl-long.657/)
+3. Jiayang Song, Yuheng Huang, Zhehua Zhou, Lei Ma. **Multilingual Blending:
+   LLM Safety Alignment Evaluation with Language Mixture.** Findings of NAACL 2025.
+   [aclanthology.org/2025.findings-naacl.191](https://aclanthology.org/2025.findings-naacl.191/)
+4. Aakanksha, Arash Ahmadian, Beyza Ermis, et al. **The Multilingual Alignment
+   Prism: Aligning Global and Local Preferences to Reduce Harm.** EMNLP 2024.
+   [aclanthology.org/2024.emnlp-main.671](https://aclanthology.org/2024.emnlp-main.671/)
+5. Tessa Han, Aounon Kumar, Chirag Agarwal, Himabindu Lakkaraju. **Towards Safe
+   Large Language Models for Medicine (MedSafetyBench).** ICML 2024.
+   [arXiv:2403.03744](https://arxiv.org/abs/2403.03744)
+6. Solon Barocas, Andrew D. Selbst. **Big Data's Disparate Impact.** California
+   Law Review 104(3), 2016. [doi:10.15779/Z38BG31](https://doi.org/10.15779/Z38BG31)
