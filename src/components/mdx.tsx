@@ -6,7 +6,6 @@ import rehypeSlug from "rehype-slug"
 import remarkGfm from "remark-gfm"
 
 import { UTM_PARAMS } from "@/config/site"
-import { generator } from "@/lib/auto-type-table"
 import { rehypeAddQueryParams } from "@/lib/rehype-add-query-params"
 import {
   rehypeCodeRawString,
@@ -34,7 +33,6 @@ import {
 } from "@/components/base/ui/tabs"
 import { CodeCollapsibleWrapper } from "@/components/code-collapsible-wrapper"
 import { ComponentSource } from "@/components/component-source"
-import { AutoTypeTable } from "@/registry/components/auto-type-table"
 
 import { Callout } from "./callout"
 import { CodeTabs } from "./code-tabs"
@@ -91,7 +89,6 @@ const components: MDXRemoteProps["components"] = {
   IframeEmbed,
   FramedImage,
   Testimonial,
-  AutoTypeTable: (props) => <AutoTypeTable {...props} generator={generator} />,
 }
 
 const options: MDXRemoteProps["options"] = {
