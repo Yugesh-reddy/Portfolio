@@ -11,6 +11,9 @@ import {
   useTransform,
 } from "motion/react"
 
+import { metalClickSound } from "@/lib/soundcn/metal-click"
+import { cn } from "@/lib/utils"
+import { useSound } from "@/hooks/soundcn/use-sound"
 import {
   YS_MARK_PRESS,
   YS_MARK_VIEW_HEIGHT,
@@ -18,9 +21,10 @@ import {
   YS_MARK_VIEWBOX,
   ysMarkPaths,
 } from "@/features/portfolio/data/ys-mark-paths"
-import { useSound } from "@/hooks/soundcn/use-sound"
-import { metalClickSound } from "@/lib/soundcn/metal-click"
-import { cn } from "@/lib/utils"
+import { getIsometricParityMetrics } from "@/features/portfolio/lib/isometric-detail-scale"
+
+const parityMetrics = getIsometricParityMetrics(YS_MARK_VIEW_WIDTH)
+const guideDasharray = parityMetrics.guideDasharray.join(" ")
 
 const transition: Transition = {
   type: "spring",
@@ -33,8 +37,8 @@ const transition: Transition = {
  * @ncdai/spotlight-logo, with the CD demo artwork swapped for the isometric
  * YS mark (the Y + S letterforms). The cursor-tracking gradient stroke, springy
  * press, and tactile click sound are unchanged; the paths come from the
- * generated `ys-mark-paths.ts` so occlusion (strokesUnder vs strokesTop) and the
- * dark-mode stroke/pattern contrast stay correct.
+ * generated `ys-mark-paths.ts` so occlusion (strokesUnder vs strokesTop) stays
+ * correct.
  */
 export function SpotlightLogo({ className }: { className?: string }) {
   const id = useId()
@@ -49,20 +53,22 @@ export function SpotlightLogo({ className }: { className?: string }) {
   const ref = useRef<SVGSVGElement>(null)
   const shouldReduceMotion = useReducedMotion()
   const isInView = useInView(ref, { margin: "80px" })
-  const [play] = useSound(metalClickSound, { volume: 0.5 })
+  const [play] = useSound(metalClickSound)
 
   const mouseX = useMotionValue(0.5)
   const mouseY = useMotionValue(0.5)
 
-  const cx = useSpring(
-    useTransform(mouseX, [0, 1], [0, YS_MARK_VIEW_WIDTH]),
-    { stiffness: 300, damping: 30, mass: 0.1 }
-  )
+  const cx = useSpring(useTransform(mouseX, [0, 1], [0, YS_MARK_VIEW_WIDTH]), {
+    stiffness: 300,
+    damping: 30,
+    mass: 0.1,
+  })
 
-  const cy = useSpring(
-    useTransform(mouseY, [0, 1], [0, YS_MARK_VIEW_HEIGHT]),
-    { stiffness: 300, damping: 30, mass: 0.1 }
-  )
+  const cy = useSpring(useTransform(mouseY, [0, 1], [0, YS_MARK_VIEW_HEIGHT]), {
+    stiffness: 300,
+    damping: 30,
+    mass: 0.1,
+  })
 
   useEffect(() => {
     if (shouldReduceMotion || !isInView) return
@@ -81,9 +87,6 @@ export function SpotlightLogo({ className }: { className?: string }) {
     <motion.svg
       ref={ref}
       className={cn(
-        // Light mode matches chanhdai CD mark (16% / 12%). Dark mode needs a
-        // higher mix (28% / 22%) — against the near-black bg the low mix reads
-        // as nearly invisible away from the cursor spotlight.
         "h-auto w-full touch-manipulation overflow-visible [--pattern:color-mix(in_oklab,var(--foreground)_12%,var(--background))] [--stroke:color-mix(in_oklab,var(--foreground)_16%,var(--background))] dark:[--pattern:color-mix(in_oklab,var(--foreground)_22%,var(--background))] dark:[--stroke:color-mix(in_oklab,var(--foreground)_28%,var(--background))]",
         className
       )}
@@ -92,10 +95,8 @@ export function SpotlightLogo({ className }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
       initial="normal"
-      whileTap={shouldReduceMotion ? undefined : "pressed"}
-      onTap={() => {
-        if (!shouldReduceMotion) play()
-      }}
+      whileTap="pressed"
+      onTap={() => play()}
     >
       <defs>
         <pattern
@@ -105,6 +106,7 @@ export function SpotlightLogo({ className }: { className?: string }) {
           width="10"
           height="10"
           patternUnits="userSpaceOnUse"
+          patternTransform={`scale(${parityMetrics.patternScale})`}
         >
           <path
             d="M-1 1l2 -2M0 10l10 -10M9 11l2 -2"
@@ -150,7 +152,7 @@ export function SpotlightLogo({ className }: { className?: string }) {
           id={ids.radialGradient}
           cx={cx}
           cy={cy}
-          r="200"
+          r={parityMetrics.spotlightRadius}
           gradientUnits="userSpaceOnUse"
         >
           <stop
@@ -167,7 +169,11 @@ export function SpotlightLogo({ className }: { className?: string }) {
       </defs>
 
       {/* Iso-axis construction guides — same dash recipe as CD */}
-      <g className="stroke-line" strokeWidth="1" strokeDasharray="4 2">
+      <g
+        className="stroke-line"
+        strokeWidth={parityMetrics.strokeWidth}
+        strokeDasharray={guideDasharray}
+      >
         {ysMarkPaths.guideLines.map((d) => (
           <path key={d} d={d} />
         ))}
@@ -191,14 +197,12 @@ export function SpotlightLogo({ className }: { className?: string }) {
       <use
         href={`#${ids.strokeUnder}`}
         stroke="var(--stroke)"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
+        strokeWidth={parityMetrics.strokeWidth}
       />
       <use
         href={`#${ids.strokeUnder}`}
         stroke={`url(#${ids.radialGradient})`}
-        strokeLinecap="square"
-        strokeLinejoin="miter"
+        strokeWidth={parityMetrics.strokeWidth}
       />
 
       <use href={`#${ids.faceFill}`} className="fill-background" />
@@ -207,14 +211,12 @@ export function SpotlightLogo({ className }: { className?: string }) {
       <use
         href={`#${ids.strokeTop}`}
         stroke="var(--stroke)"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
+        strokeWidth={parityMetrics.strokeWidth}
       />
       <use
         href={`#${ids.strokeTop}`}
         stroke={`url(#${ids.radialGradient})`}
-        strokeLinecap="square"
-        strokeLinejoin="miter"
+        strokeWidth={parityMetrics.strokeWidth}
       />
     </motion.svg>
   )
