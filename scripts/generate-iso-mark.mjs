@@ -7,9 +7,9 @@
  * - Viewer-facing side fills, tops with hatch, strokes on top
  * - Iso-axis construction guides (dashed), same spacing family as CD
  *
- * Projection constants from chanhdai.com: 64px cells, 32px extrude, 16px press.
+ * Projection constants from chanhdai.com: 64px cells, 40px extrude,
+ * and a 16px press scaled to the YS viewBox so screen-space travel matches CD.
  */
-
 import { writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -18,7 +18,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const REF_CELL = 64
 const EXTRUDE = 40
-const PRESS = 20
+const CHANH_DAI_MARK_VIEW_WIDTH = 556
+const CHANH_DAI_PRESS = 16
+// 1-cell bars. Do not thicken: offset/union dilation destroys this silhouette.
 const CELL = 64
 
 // Keep in sync with src/features/portfolio/data/ys-pixel-mark.ts
@@ -43,7 +45,7 @@ const Y_BLOCK_COUNT = 5
 const isoX = CELL * Math.cos(Math.PI / 6)
 const isoY = CELL * Math.sin(Math.PI / 6)
 const extrude = (CELL / REF_CELL) * EXTRUDE
-const press = (CELL / REF_CELL) * PRESS
+let press = CHANH_DAI_PRESS
 
 const blocks = YS_RECTS.map(([x, y, w, h]) => ({
   c0: Math.round(x / CELL),
@@ -180,7 +182,12 @@ function buildMark(vertex) {
       )
       sideFaces.pressed.push(
         polyline(
-          [shift(b, press), shift(c, press), shift(c, extrude), shift(b, extrude)],
+          [
+            shift(b, press),
+            shift(c, press),
+            shift(c, extrude),
+            shift(b, extrude),
+          ],
           true
         )
       )
@@ -200,7 +207,12 @@ function buildMark(vertex) {
       )
       sideFaces.pressed.push(
         polyline(
-          [shift(c, press), shift(d, press), shift(d, extrude), shift(c, extrude)],
+          [
+            shift(c, press),
+            shift(d, press),
+            shift(d, extrude),
+            shift(c, extrude),
+          ],
           true
         )
       )
@@ -216,17 +228,13 @@ function buildMark(vertex) {
       const a = vertex(c0, block.r0)
       const b = vertex(c1, block.r0)
       strokesTop.normal.push(polyline([a, b]))
-      strokesTop.pressed.push(
-        polyline([shift(a, press), shift(b, press)])
-      )
+      strokesTop.pressed.push(polyline([shift(a, press), shift(b, press)]))
     }
     for (const [r0, r1] of runs(edges.west)) {
       const d = vertex(block.c0, r1)
       const a = vertex(block.c0, r0)
       strokesTop.normal.push(polyline([d, a]))
-      strokesTop.pressed.push(
-        polyline([shift(d, press), shift(a, press)])
-      )
+      strokesTop.pressed.push(polyline([shift(d, press), shift(a, press)]))
     }
 
     // Silhouette verticals at the three viewer-facing corners of every prism.
@@ -275,10 +283,9 @@ function computeBounds(vertex) {
 }
 
 /**
- * Iso-axis construction guides — same idea as chanhdai's CD mark, anchored
- * directly to the letterforms: one −30° rail tangent under the whole mark
- * (floors included), plus one +30° rail grazing the top-left "start" edge of
- * each letter, running off toward the upper-left like construction lines.
+ * Iso-axis construction guides — the same coherent construction used by the
+ * CD mark: one −30° rail tangent under the whole mark, plus one +30° rail per
+ * letter. Each rising rail meets the shared bottom rail at a real Y/S vertex.
  */
 function buildGuideLines(vertex) {
   const m = Math.tan(Math.PI / 6)
@@ -294,16 +301,19 @@ function buildGuideLines(vertex) {
     shift(top.c, extrude),
     shift(top.d, extrude),
   ])
-  // Westmost block of a letter range: min d.x, tie-broken toward the top.
-  const westBlock = (from, to) =>
+
+  const pointsForLetter = (from, to) =>
     tops
       .slice(from, to)
-      .reduce((best, top) =>
-        top.d[0] < best.d[0] - 1e-6 ||
-        (Math.abs(top.d[0] - best.d[0]) <= 1e-6 && top.d[1] < best.d[1])
-          ? top
-          : best
-      )
+      .flatMap((top) => [
+        top.a,
+        top.b,
+        top.c,
+        top.d,
+        shift(top.b, extrude),
+        shift(top.c, extrude),
+        shift(top.d, extrude),
+      ])
 
   function line(slope, b) {
     const x0 = width / 2
@@ -314,15 +324,21 @@ function buildGuideLines(vertex) {
     return `M${fmt(x0 - dx)} ${fmt(y0 - dy)}L${fmt(x0 + dx)} ${fmt(y0 + dy)}`
   }
 
-  // Bottom rail: −30° tangent below everything (max y + m·x intercept)
   const bottom = Math.max(...allPoints.map(([x, y]) => y + m * x))
-  // Letter-start rails: +30° along the north edge of each letter's westmost
-  // block, so each line grazes the letter's top-left "start" and runs off to
-  // the left. (A min-intercept tangent over the whole letter would snap to
-  // whichever block pokes furthest up-right — e.g. the Y stem — instead.)
-  const startEdge = (top) => top.a[1] - m * top.a[0]
-  const startY = startEdge(westBlock(0, Y_BLOCK_COUNT))
-  const startS = startEdge(westBlock(Y_BLOCK_COUNT, tops.length))
+
+  const risingRail = (from, to) => {
+    const bottomVertices = pointsForLetter(from, to).filter(
+      ([x, y]) => Math.abs(y + m * x - bottom) < 0.01
+    )
+    if (bottomVertices.length === 0) {
+      throw new Error("Expected each letter to touch the shared bottom rail")
+    }
+
+    return Math.max(...bottomVertices.map(([x, y]) => y - m * x))
+  }
+
+  const startY = risingRail(0, Y_BLOCK_COUNT)
+  const startS = risingRail(Y_BLOCK_COUNT, tops.length)
 
   return [line(-m, bottom), line(m, startY), line(m, startS)]
 }
@@ -331,6 +347,7 @@ const rawBounds = computeBounds(makeVertex(0, 0))
 const vertex = makeVertex(-rawBounds.minX, -rawBounds.minY)
 const width = Number(fmt(rawBounds.maxX - rawBounds.minX))
 const height = Number(fmt(rawBounds.maxY - rawBounds.minY))
+press = Number(fmt((CHANH_DAI_PRESS * width) / CHANH_DAI_MARK_VIEW_WIDTH))
 const mark = buildMark(vertex)
 const guideLines = buildGuideLines(vertex)
 
