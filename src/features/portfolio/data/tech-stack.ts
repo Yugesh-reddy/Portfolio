@@ -93,6 +93,12 @@ export const TECH_STACK: TechStack[] = [
     theme: true,
   },
   {
+    key: "langsmith",
+    title: "LangSmith",
+    href: "https://www.langchain.com/langsmith",
+    categories: ["LLM Ops"],
+  },
+  {
     key: "ollama",
     title: "Ollama",
     href: "https://ollama.com/",
@@ -220,7 +226,13 @@ export const TECH_STACK: TechStack[] = [
   {
     key: "codex",
     title: "Codex",
-    href: "https://openai.com/index/introducing-codex/",
+    href: "https://openai.com/codex",
+    categories: ["Tools & Design"],
+  },
+  {
+    key: "cursor",
+    title: "Cursor",
+    href: "https://cursor.com/",
     categories: ["Tools & Design"],
   },
 ]
