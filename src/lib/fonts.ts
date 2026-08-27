@@ -1,3 +1,4 @@
+import { Caveat } from "next/font/google"
 import localFont from "next/font/local"
 import { GeistMono } from "geist/font/mono"
 import { GeistPixelSquare } from "geist/font/pixel"
@@ -13,6 +14,12 @@ const fontSerif = localFont({
   weight: "400",
   fallback: ["Georgia", "serif"],
   variable: "--font-serif",
+})
+
+const fontHandwritten = Caveat({
+  weight: ["400", "500"],
+  display: "swap",
+  variable: "--font-handwritten",
 })
 
 // const fontPixel = localFont({
@@ -41,6 +48,7 @@ export const fontVariables = cn(
   fontSans.variable,
   fontMono.variable,
   fontSerif.variable,
+  fontHandwritten.variable,
   GeistPixelSquare.variable,
   pixelatedMSSansSerif.variable,
   "[--font-sans:var(--font-geist-sans)]",
