@@ -1,9 +1,10 @@
-import { AvatarLights } from "@/registry/components/avatar-lights"
 import { SpotlightLogo } from "@/components/spotlight-logo"
+import { AvatarLights } from "@/registry/components/avatar-lights"
 import { USER } from "@/features/portfolio/data/user"
 
 import { AvatarLightsToggle } from "./avatar-lights-toggle"
 import { FlipSentences } from "./flip-sentences"
+import { HandwrittenArrow, HandwrittenNote } from "./handwritten-note"
 import { PronounceMyName } from "./pronounce-my-name"
 import { VerifiedIcon } from "./verified-icon"
 
@@ -12,6 +13,13 @@ export function ProfileHeader() {
     <div className="screen-line-bottom grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] overflow-y-clip border-x border-line">
       <figure className="relative col-span-2 p-2 sm:col-span-1 sm:col-start-2 sm:p-4">
         <SpotlightLogo />
+        <HandwrittenNote
+          className="bottom-20 left-full hidden w-36 flex-col items-start pointer-fine:xl:flex"
+          aria-hidden
+        >
+          <HandwrittenArrow className="-scale-y-100 -rotate-6" />
+          <span className="ml-1 -rotate-6">hey, that&apos;s me</span>
+        </HandwrittenNote>
         <figcaption className="pointer-events-none absolute right-2 bottom-2 font-mono text-xs leading-none text-zinc-400 select-none sm:right-4 dark:text-zinc-700">
           FIG_001
         </figcaption>
