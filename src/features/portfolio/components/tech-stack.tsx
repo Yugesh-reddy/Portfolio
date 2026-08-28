@@ -1,5 +1,6 @@
 import { TECH_STACK } from "../data/tech-stack"
 import type { TechStack as TechStackType } from "../types/tech-stack"
+import { HandwrittenArrow, HandwrittenNote } from "./handwritten-note"
 import { Panel, PanelHeader, PanelTitle } from "./panel"
 
 const ID = "stack"
@@ -78,6 +79,14 @@ export function TechStack() {
           }
         )}
       </div>
+
+      <HandwrittenNote
+        className="top-6 right-full mr-2 hidden w-24 flex-col items-end lg:flex"
+        aria-hidden
+      >
+        <span className="-rotate-6">tools I use</span>
+        <HandwrittenArrow className="size-7 -scale-x-100 -rotate-6" />
+      </HandwrittenNote>
     </Panel>
   )
 }
