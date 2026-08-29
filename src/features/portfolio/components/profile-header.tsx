@@ -68,7 +68,7 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
       >
         <SpotlightLogo />
         <HandwrittenNote
-          className="bottom-20 left-full hidden w-40 flex-col items-start pointer-fine:xl:flex"
+          className="bottom-20 left-full hidden w-40 flex-col items-start lg:flex"
           aria-hidden
         >
           <HandwrittenArrow className="-scale-y-100 -rotate-6" />
