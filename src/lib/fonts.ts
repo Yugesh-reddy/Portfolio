@@ -19,7 +19,8 @@ const fontSerif = localFont({
 const fontHandwritten = Caveat({
   weight: ["400", "500"],
   display: "swap",
-  variable: "--font-handwritten",
+  // Distinct from the Tailwind theme token so `@theme` is not circular.
+  variable: "--font-caveat",
 })
 
 // const fontPixel = localFont({
@@ -52,5 +53,6 @@ export const fontVariables = cn(
   GeistPixelSquare.variable,
   pixelatedMSSansSerif.variable,
   "[--font-sans:var(--font-geist-sans)]",
-  "[--font-mono:var(--font-geist-mono)]"
+  "[--font-mono:var(--font-geist-mono)]",
+  "[--font-handwritten:var(--font-caveat)]"
 )
