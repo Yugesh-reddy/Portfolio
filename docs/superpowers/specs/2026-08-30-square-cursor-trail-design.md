@@ -18,7 +18,7 @@ Add a sitewide custom cursor: a small filled square at the pointer, followed by 
 
 ## Design read
 
-Preserve-style portfolio. Cursor is a quiet accent, not a gimmick. Warm orange/red square reads as intentional against zinc/black UI (same family as Heron’s orange tip). Desktop polish only.
+Preserve-style portfolio. Cursor is a quiet accent, not a gimmick. Pencil/graphite square (soft charcoal stroke, not brand orange) so it feels like a drafting mark on the page. Desktop polish only.
 
 ## Behavior
 
@@ -33,8 +33,8 @@ Preserve-style portfolio. Cursor is a quiet accent, not a gimmick. Warm orange/r
 
 - Shape: square (`border-radius: 0`)
 - Size: ~8–10px
-- Color: warm accent — e.g. `#ff4d1a` / `oklch(0.65 0.22 40)` (token `--cursor-accent`)
-- Position: fixed, centered on clientX/Y (or top-left of square flush to tip — prefer **center** of square on hotspot for balance)
+- Color: pencil/graphite — soft charcoal that reads on both themes (token `--cursor-accent`)
+- Position: fixed, centered on clientX/Y (prefer **center** of square on hotspot)
 - `pointer-events: none`, high z-index above UI chrome (~`z-[100]`)
 
 ### Trail (streak)
@@ -44,7 +44,7 @@ Preserve-style portfolio. Cursor is a quiet accent, not a gimmick. Warm orange/r
 - Size: same as lead or slightly smaller toward the tail
 - Opacity: fades along the chain (head opaque → tail ~0)
 - Optional: slight scale-down on older segments
-- Color: same accent as lead
+- Color: same pencil accent as lead
 
 ### Motion
 
@@ -61,12 +61,17 @@ Preserve-style portfolio. Cursor is a quiet accent, not a gimmick. Warm orange/r
 ## Tokens
 
 ```css
---cursor-accent: oklch(0.65 0.22 40); /* warm orange-red */
+/* Light: graphite pencil on paper · Dark: soft lead on zinc */
+--cursor-accent: oklch(0.35 0.01 260);
 --cursor-size: 9px;
 --cursor-trail-count: 10;
+
+.dark {
+  --cursor-accent: oklch(0.78 0.01 260);
+}
 ```
 
-Dark/light: same accent on both (Heron stays vivid on light paper; still readable on dark zinc).
+Theme-aware so the “pencil” stays visible without going neon orange.
 
 ## Accessibility
 
@@ -80,4 +85,4 @@ Dark/light: same accent on both (Heron stays vivid on light paper; still readabl
 - Fine-pointer desktop: system cursor hidden; square + streak follow pointer
 - Touch / reduced motion: normal system cursor, no trail DOM cost
 - No layout shift; no click targeting regressions
-- Accent reads clearly in light and dark themes
+- Pencil accent reads as graphite in light mode and soft lead in dark mode
