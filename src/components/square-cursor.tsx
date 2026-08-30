@@ -16,7 +16,7 @@ const SIZE_PX = 9
 export function SquareCursor() {
   const reduceMotion = useReducedMotion()
   const isFinePointer = useMediaQuery("(pointer: fine)")
-  const enabled = isFinePointer === true && reduceMotion !== true
+  const enabled = isFinePointer === true && reduceMotion === false
 
   const pointsRef = useRef<CursorPoint[]>(
     Array.from({ length: TRAIL_COUNT }, () => ({ x: 0, y: 0 }))
@@ -34,7 +34,13 @@ export function SquareCursor() {
     }
 
     document.documentElement.setAttribute("data-custom-cursor", "")
+    visibleRef.current = false
     seededRef.current = false
+    pointsRef.current = Array.from({ length: TRAIL_COUNT }, () => ({
+      x: 0,
+      y: 0,
+    }))
+    targetRef.current = { x: 0, y: 0 }
 
     const onMove = (event: PointerEvent) => {
       const point = { x: event.clientX, y: event.clientY }
@@ -49,6 +55,10 @@ export function SquareCursor() {
     }
     const onLeave = () => {
       visibleRef.current = false
+      for (let i = 0; i < TRAIL_COUNT; i++) {
+        const node = nodesRef.current[i]
+        if (node) node.style.opacity = "0"
+      }
     }
     const onEnter = () => {
       visibleRef.current = true
@@ -83,7 +93,15 @@ export function SquareCursor() {
       document.documentElement.removeEventListener("pointerenter", onEnter)
       if (rafRef.current != null) {
         window.cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
       }
+      visibleRef.current = false
+      seededRef.current = false
+      pointsRef.current = Array.from({ length: TRAIL_COUNT }, () => ({
+        x: 0,
+        y: 0,
+      }))
+      targetRef.current = { x: 0, y: 0 }
     }
   }, [enabled])
 
