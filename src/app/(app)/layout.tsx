@@ -8,6 +8,10 @@ const ScrollToTop = dynamic(() =>
   import("@/components/scroll-to-top").then((mod) => mod.ScrollToTop)
 )
 
+const SquareCursor = dynamic(() =>
+  import("@/components/square-cursor").then((mod) => mod.SquareCursor)
+)
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="group/layout">
@@ -20,6 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <SiteBottomNav />
       <ScrollToTop />
+      <SquareCursor />
     </div>
   )
 }

@@ -23,6 +23,7 @@ export function SquareCursor() {
   )
   const targetRef = useRef<CursorPoint>({ x: 0, y: 0 })
   const visibleRef = useRef(false)
+  const seededRef = useRef(false)
   const nodesRef = useRef<(HTMLDivElement | null)[]>([])
   const rafRef = useRef<number | null>(null)
 
@@ -33,9 +34,17 @@ export function SquareCursor() {
     }
 
     document.documentElement.setAttribute("data-custom-cursor", "")
+    seededRef.current = false
 
     const onMove = (event: PointerEvent) => {
-      targetRef.current = { x: event.clientX, y: event.clientY }
+      const point = { x: event.clientX, y: event.clientY }
+      targetRef.current = point
+      if (!seededRef.current) {
+        pointsRef.current = Array.from({ length: TRAIL_COUNT }, () => ({
+          ...point,
+        }))
+        seededRef.current = true
+      }
       visibleRef.current = true
     }
     const onLeave = () => {
