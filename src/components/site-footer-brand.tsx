@@ -1,9 +1,9 @@
-import { FluidGradientText } from "@/registry/components/fluid-gradient-text"
+import { InkFillLogotype } from "@/components/ink-fill-logotype"
 
 export function SiteFooterInteractiveLogotype() {
   return (
     <div className="screen-line-bottom text-foreground">
-      <FluidGradientText text="YUGESH" />
+      <InkFillLogotype text="YUGESH" />
     </div>
   )
 }
