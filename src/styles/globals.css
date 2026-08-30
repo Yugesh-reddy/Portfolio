@@ -222,6 +222,11 @@
   }
 }
 
+html[data-custom-cursor],
+html[data-custom-cursor] * {
+  cursor: none !important;
+}
+
 :root {
   /* white */
   --background: oklch(1 0 0);
@@ -355,6 +360,9 @@
   --chart-marker-foreground: oklch(0.3 0.01 260);
   --chart-ring-background: oklch(0.9 0.005 260 / 0.25);
   --chart-label: oklch(0.45 0.01 260);
+
+  --cursor-accent: oklch(0.35 0.01 260);
+  --cursor-size: 9px;
 }
 
 .dark {
@@ -464,6 +472,8 @@
   --chart-marker-foreground: oklch(0.9 0 0);
   --chart-ring-background: oklch(0.35 0.01 260 / 0.25);
   --chart-label: oklch(0.75 0.01 260);
+
+  --cursor-accent: oklch(0.78 0.01 260);
 }
 
 @layer base {
