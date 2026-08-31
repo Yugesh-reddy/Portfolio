@@ -57,8 +57,6 @@ export function Overview() {
 
           <CurrentLocalTimeItem timeZone={USER.timeZone} />
 
-          <EmailItem email={USER.email} />
-
           <IntroItem>
             <IntroItemIcon>
               <LinkIcon />
@@ -72,6 +70,8 @@ export function Overview() {
               </IntroItemLink>
             </IntroItemContent>
           </IntroItem>
+
+          <EmailItem email={USER.email} />
 
           <IntroItem>
             <IntroItemIcon>{getGenderIcon(USER.gender)}</IntroItemIcon>
