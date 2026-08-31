@@ -14,6 +14,7 @@ import {
   MonitorIcon,
   MoonStarIcon,
   RssIcon,
+  SparklesIcon,
   SunMediumIcon,
   TextInitialIcon,
 } from "lucide-react"
@@ -21,6 +22,7 @@ import { useTheme } from "next-themes"
 import { useHotkeys } from "react-hotkeys-hook"
 
 import { trackEvent } from "@/lib/events"
+import { cn } from "@/lib/utils"
 import { useClickSound } from "@/hooks/soundcn/use-click-sound"
 import { useMutationObserver } from "@/hooks/use-mutation-observer"
 import {
@@ -33,14 +35,15 @@ import {
   CommandShortcut,
 } from "@/components/ui/command"
 import type { DocPreview } from "@/features/doc/types/document"
+import { EveeChat } from "@/features/evee/components/evee-chat"
 import { SOCIAL_LINKS } from "@/features/portfolio/data/social-links"
 
-import { PixelMark } from "./pixel-mark"
 import { Icons } from "./icons"
+import { PixelMark } from "./pixel-mark"
 import { Button } from "./ui/button"
 import { Kbd, KbdGroup } from "./ui/kbd"
 
-type CommandKind = "command" | "page" | "link"
+type CommandKind = "command" | "page" | "link" | "ai"
 
 type CommandLinkItem = {
   title: string
@@ -59,7 +62,6 @@ const PORTFOLIO_LINKS: CommandLinkItem[] = [
     href: "/",
     kind: "page",
     icon: <PixelMark />,
-    shortcut: "GH",
   },
   {
     title: "About",
@@ -102,7 +104,6 @@ const PORTFOLIO_LINKS: CommandLinkItem[] = [
     href: "/blog",
     kind: "page",
     icon: <Icons.news />,
-    shortcut: "GL",
   },
 ]
 
@@ -150,19 +151,33 @@ export function CommandMenu({
   const { setTheme } = useTheme()
 
   const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<"command" | "chat">("command")
+  const [searchValue, setSearchValue] = useState("")
+  const [chatInitialQuery, setChatInitialQuery] = useState("")
 
   const [selectedCommandKind, setSelectedCommandKind] =
     useState<CommandKind | null>(null)
 
   const [click] = useClickSound()
 
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (!nextOpen) {
+      setMode("command")
+      setSearchValue("")
+      setChatInitialQuery("")
+      setSelectedCommandKind(null)
+    }
+  }, [])
+
   useHotkeys(
     "mod+k, slash",
     (e) => {
       e.preventDefault()
 
-      setOpen((open) => {
-        if (!open) {
+      setOpen((isOpen) => {
+        const next = !isOpen
+        if (next) {
           trackEvent({
             name: "open_command_menu",
             properties: {
@@ -170,8 +185,12 @@ export function CommandMenu({
               key: e.key === "/" ? "/" : e.metaKey ? "cmd+k" : "ctrl+k",
             },
           })
+        } else {
+          setMode("command")
+          setSearchValue("")
+          setChatInitialQuery("")
         }
-        return !open
+        return next
       })
     },
     { enabled: enabledHotkeys }
@@ -179,7 +198,7 @@ export function CommandMenu({
 
   const handleOpenLink = useCallback(
     (href: string, openInNewTab = false) => {
-      setOpen(false)
+      handleOpenChange(false)
 
       trackEvent({
         name: "command_menu_action",
@@ -196,13 +215,13 @@ export function CommandMenu({
         router.push(href)
       }
     },
-    [router]
+    [handleOpenChange, router]
   )
 
   const createThemeHandler = useCallback(
     (theme: "light" | "dark" | "system") => () => {
       click()
-      setOpen(false)
+      handleOpenChange(false)
 
       trackEvent({
         name: "command_menu_action",
@@ -214,7 +233,7 @@ export function CommandMenu({
 
       setTheme(theme)
     },
-    [click, setTheme]
+    [click, handleOpenChange, setTheme]
   )
 
   const blogLinks = useMemo(
@@ -236,6 +255,18 @@ export function CommandMenu({
     setSelectedCommandKind("command")
   }, [])
 
+  const startEveeChat = useCallback((query?: string) => {
+    setChatInitialQuery(query || "")
+    setMode("chat")
+    trackEvent({
+      name: "command_menu_action",
+      properties: {
+        action: "ask_evee",
+        query: query || "",
+      },
+    })
+  }, [])
+
   return (
     <>
       <CommandMenuTrigger
@@ -250,72 +281,158 @@ export function CommandMenu({
         }}
       />
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandMenuInput />
-
-        <div className="rounded-xl bg-background ring-1 ring-border">
-          <CommandList className="min-h-80 supports-timeline-scroll:scroll-fade-effect-y">
-            <CommandEmpty>No results found.</CommandEmpty>
-
-            <CommandLinkGroup
-              heading="Portfolio"
-              links={PORTFOLIO_LINKS}
-              onLinkHighlight={handleLinkHighlight}
-              onLinkSelect={handleOpenLink}
-            />
-
-            <CommandLinkGroup
-              heading="Blog"
-              links={blogLinks}
-              fallbackIcon={<Icons.news />}
-              onLinkHighlight={handleLinkHighlight}
-              onLinkSelect={handleOpenLink}
-            />
-
-            <CommandLinkGroup
-              heading="Social Links"
-              links={SOCIAL_LINK_ITEMS}
-              onLinkHighlight={handleLinkHighlight}
-              onLinkSelect={handleOpenLink}
-            />
-
-            <CommandGroup heading="Theme">
-              <CommandMenuItem
-                keywords={["theme"]}
-                onHighlight={handleCommandHighlight}
-                onSelect={createThemeHandler("light")}
-              >
-                <SunMediumIcon />
-                Light
-              </CommandMenuItem>
-              <CommandMenuItem
-                keywords={["theme"]}
-                onHighlight={handleCommandHighlight}
-                onSelect={createThemeHandler("dark")}
-              >
-                <MoonStarIcon />
-                Dark
-              </CommandMenuItem>
-              <CommandMenuItem
-                keywords={["theme"]}
-                onHighlight={handleCommandHighlight}
-                onSelect={createThemeHandler("system")}
-              >
-                <MonitorIcon />
-                System
-              </CommandMenuItem>
-            </CommandGroup>
-
-            <CommandLinkGroup
-              heading="Other"
-              links={OTHER_LINK_ITEMS}
-              onLinkHighlight={handleLinkHighlight}
-              onLinkSelect={handleOpenLink}
-            />
-          </CommandList>
+      <CommandDialog open={open} onOpenChange={handleOpenChange}>
+        {/* Navigation / Ask Evee mode switch tab bar */}
+        <div className="flex items-center justify-between border-b border-border/50 bg-muted/20 px-3 py-1.5">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setMode("command")}
+              className={cn(
+                "cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors active:scale-95",
+                mode === "command"
+                  ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              Navigation
+            </button>
+            <button
+              type="button"
+              onClick={() => startEveeChat(searchValue)}
+              className={cn(
+                "flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors active:scale-95",
+                mode === "chat"
+                  ? "bg-primary/15 font-semibold text-primary shadow-xs ring-1 ring-primary/30"
+                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              )}
+            >
+              <SparklesIcon className="size-3 text-amber-500" />
+              Ask Evee
+            </button>
+          </div>
         </div>
 
-        <CommandMenuFooter selectedCommandKind={selectedCommandKind} />
+        {mode === "chat" ? (
+          <EveeChat
+            initialQuery={chatInitialQuery}
+            onBack={() => {
+              setMode("command")
+              setChatInitialQuery("")
+            }}
+          />
+        ) : (
+          <>
+            <CommandMenuInput
+              value={searchValue}
+              onValueChange={setSearchValue}
+            />
+
+            <div className="rounded-xl bg-background ring-1 ring-border">
+              <CommandList className="min-h-80 supports-timeline-scroll:scroll-fade-effect-y">
+                <CommandEmpty className="py-6 text-center text-sm">
+                  <p className="text-muted-foreground">
+                    No navigation matches found.
+                  </p>
+                  {searchValue.trim() && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startEveeChat(searchValue.trim())}
+                      className="mt-3 gap-1.5 border-primary/30 text-xs text-primary hover:bg-primary/10"
+                    >
+                      <SparklesIcon className="size-3.5 text-amber-500" />
+                      Ask Evee &ldquo;{searchValue}&rdquo;
+                    </Button>
+                  )}
+                </CommandEmpty>
+
+                {searchValue.trim().length > 0 && (
+                  <CommandGroup heading="AI Assistant">
+                    <CommandMenuItem
+                      value={`ask-evee-${searchValue}`}
+                      keywords={[
+                        "ask",
+                        "evee",
+                        "ai",
+                        "chat",
+                        "yugesh",
+                        ...searchValue.toLowerCase().split(" "),
+                      ]}
+                      onHighlight={() => setSelectedCommandKind("ai")}
+                      onSelect={() => startEveeChat(searchValue.trim())}
+                      className="border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"
+                    >
+                      <SparklesIcon className="size-4 shrink-0 text-amber-500" />
+                      <span className="font-medium">
+                        Ask Evee: &ldquo;{searchValue}&rdquo;
+                      </span>
+                      <CommandShortcut>↵</CommandShortcut>
+                    </CommandMenuItem>
+                  </CommandGroup>
+                )}
+
+                <CommandLinkGroup
+                  heading="Portfolio"
+                  links={PORTFOLIO_LINKS}
+                  onLinkHighlight={handleLinkHighlight}
+                  onLinkSelect={handleOpenLink}
+                />
+
+                <CommandLinkGroup
+                  heading="Blog"
+                  links={blogLinks}
+                  fallbackIcon={<Icons.news />}
+                  onLinkHighlight={handleLinkHighlight}
+                  onLinkSelect={handleOpenLink}
+                />
+
+                <CommandLinkGroup
+                  heading="Social Links"
+                  links={SOCIAL_LINK_ITEMS}
+                  onLinkHighlight={handleLinkHighlight}
+                  onLinkSelect={handleOpenLink}
+                />
+
+                <CommandGroup heading="Theme">
+                  <CommandMenuItem
+                    keywords={["theme"]}
+                    onHighlight={handleCommandHighlight}
+                    onSelect={createThemeHandler("light")}
+                  >
+                    <SunMediumIcon />
+                    Light
+                  </CommandMenuItem>
+                  <CommandMenuItem
+                    keywords={["theme"]}
+                    onHighlight={handleCommandHighlight}
+                    onSelect={createThemeHandler("dark")}
+                  >
+                    <MoonStarIcon />
+                    Dark
+                  </CommandMenuItem>
+                  <CommandMenuItem
+                    keywords={["theme"]}
+                    onHighlight={handleCommandHighlight}
+                    onSelect={createThemeHandler("system")}
+                  >
+                    <MonitorIcon />
+                    System
+                  </CommandMenuItem>
+                </CommandGroup>
+
+                <CommandLinkGroup
+                  heading="Other"
+                  links={OTHER_LINK_ITEMS}
+                  onLinkHighlight={handleLinkHighlight}
+                  onLinkSelect={handleOpenLink}
+                />
+              </CommandList>
+            </div>
+
+            <CommandMenuFooter selectedCommandKind={selectedCommandKind} />
+          </>
+        )}
       </CommandDialog>
     </>
   )
@@ -325,52 +442,64 @@ function CommandMenuTrigger({ ...props }: React.ComponentProps<typeof Button>) {
   return (
     <Button
       data-slot="command-menu-trigger"
-      className="gap-1.5 rounded-full text-muted-foreground shadow-none select-none hover:bg-background hover:text-muted-foreground dark:hover:bg-input/30"
-      variant="outline"
+      className="h-8 gap-2 rounded-lg border-none bg-transparent px-2 text-muted-foreground shadow-none transition-colors select-none hover:bg-muted hover:text-foreground dark:hover:bg-neutral-800 dark:hover:text-foreground"
+      variant="ghost"
       size="sm"
       {...props}
     >
-      <Icons.search />
+      <Icons.search className="size-4 shrink-0" />
 
       <span className="font-sans text-sm/4 font-medium sm:hidden">Search…</span>
 
-      <KbdGroup className="hidden sm:in-[.os-macos_&]:flex">
-        <Kbd className="w-5 min-w-5">⌘</Kbd>
-        <Kbd className="w-5 min-w-5">K</Kbd>
+      <KbdGroup className="hidden gap-1 sm:in-[.os-macos_&]:flex">
+        <Kbd className="size-5 min-w-5 rounded-[4px] p-0 text-xs font-normal">
+          ⌘
+        </Kbd>
+        <Kbd className="size-5 min-w-5 rounded-[4px] p-0 text-xs font-normal">
+          K
+        </Kbd>
       </KbdGroup>
 
-      <KbdGroup className="hidden sm:not-[.os-macos_&]:flex">
-        <Kbd>Ctrl</Kbd>
-        <Kbd className="w-5 min-w-5">K</Kbd>
+      <KbdGroup className="hidden gap-1 sm:not-[.os-macos_&]:flex">
+        <Kbd className="h-5 min-w-5 rounded-[4px] px-1 text-xs font-normal">
+          Ctrl
+        </Kbd>
+        <Kbd className="size-5 min-w-5 rounded-[4px] p-0 text-xs font-normal">
+          K
+        </Kbd>
       </KbdGroup>
     </Button>
   )
 }
 
-function CommandMenuInput() {
-  const [searchValue, setSearchValue] = useState("")
-
+function CommandMenuInput({
+  value,
+  onValueChange,
+}: {
+  value: string
+  onValueChange: (value: string) => void
+}) {
   useEffect(() => {
-    if (searchValue.length >= 2) {
+    if (value.length >= 2) {
       const timeoutId = setTimeout(() => {
         trackEvent({
           name: "command_menu_search",
           properties: {
-            query: searchValue,
-            query_length: searchValue.length,
+            query: value,
+            query_length: value.length,
           },
         })
       }, 500)
 
       return () => clearTimeout(timeoutId)
     }
-  }, [searchValue])
+  }, [value])
 
   return (
     <CommandInput
-      placeholder="Type a command or search…"
-      value={searchValue}
-      onValueChange={setSearchValue}
+      placeholder="Search or ask Evee…"
+      value={value}
+      onValueChange={onValueChange}
     />
   )
 }
@@ -458,6 +587,7 @@ const ENTER_ACTION_LABELS: Record<CommandKind, string> = {
   command: "Run Command",
   page: "Go to Page",
   link: "Open Link",
+  ai: "Ask Evee",
 }
 
 function CommandMenuFooter({
