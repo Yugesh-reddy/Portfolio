@@ -9,9 +9,15 @@ import {
   type CursorPoint,
 } from "@/features/portfolio/lib/cursor-trail"
 
-const TRAIL_COUNT = 10
-const LERP = 0.35
-const SIZE_PX = 9
+/** More samples = smoother continuous streak. */
+const TRAIL_COUNT = 12
+const LERP = 0.55
+/** Lead square size (px). */
+const LEAD_SIZE = 7
+/** Stroke width at the tip (px). */
+const HEAD_WIDTH = 2.75
+/** Stroke width at the tail (px). */
+const TAIL_WIDTH = 0.2
 
 export function SquareCursor() {
   const reduceMotion = useReducedMotion()
@@ -24,16 +30,15 @@ export function SquareCursor() {
   const targetRef = useRef<CursorPoint>({ x: 0, y: 0 })
   const visibleRef = useRef(false)
   const seededRef = useRef(false)
-  const nodesRef = useRef<(HTMLDivElement | null)[]>([])
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rafRef = useRef<number | null>(null)
+  const dprRef = useRef(1)
 
   useEffect(() => {
-    if (!enabled) {
-      document.documentElement.removeAttribute("data-custom-cursor")
-      return
-    }
+    if (!enabled) return
 
-    document.documentElement.setAttribute("data-custom-cursor", "")
+    // Keep the native cursor visible; the square + trail follow with lerp lag.
+    document.documentElement.removeAttribute("data-custom-cursor")
     visibleRef.current = false
     seededRef.current = false
     pointsRef.current = Array.from({ length: TRAIL_COUNT }, () => ({
@@ -41,6 +46,23 @@ export function SquareCursor() {
       y: 0,
     }))
     targetRef.current = { x: 0, y: 0 }
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2)
+      dprRef.current = dpr
+      const { innerWidth: w, innerHeight: h } = window
+      canvas.width = Math.floor(w * dpr)
+      canvas.height = Math.floor(h * dpr)
+      canvas.style.width = `${w}px`
+      canvas.style.height = `${h}px`
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+    resize()
 
     const onMove = (event: PointerEvent) => {
       const point = { x: event.clientX, y: event.clientY }
@@ -55,40 +77,68 @@ export function SquareCursor() {
     }
     const onLeave = () => {
       visibleRef.current = false
-      for (let i = 0; i < TRAIL_COUNT; i++) {
-        const node = nodesRef.current[i]
-        if (node) node.style.opacity = "0"
-      }
     }
     const onEnter = () => {
       visibleRef.current = true
     }
 
     window.addEventListener("pointermove", onMove, { passive: true })
+    window.addEventListener("resize", resize, { passive: true })
     document.documentElement.addEventListener("pointerleave", onLeave)
     document.documentElement.addEventListener("pointerenter", onEnter)
 
     const tick = () => {
       pointsRef.current = stepTrail(pointsRef.current, targetRef.current, LERP)
-      const half = SIZE_PX / 2
+      const points = pointsRef.current
       const show = visibleRef.current
-      for (let i = 0; i < TRAIL_COUNT; i++) {
-        const node = nodesRef.current[i]
-        const p = pointsRef.current[i]
-        if (!node || !p) continue
-        const t = i / (TRAIL_COUNT - 1)
-        const opacity = show ? 1 - t * 0.92 : 0
-        const scale = 1 - t * 0.35
-        node.style.transform = `translate3d(${p.x - half}px, ${p.y - half}px, 0) scale(${scale})`
-        node.style.opacity = String(opacity)
+      const { innerWidth: w, innerHeight: h } = window
+
+      ctx.clearRect(0, 0, w, h)
+
+      if (show && seededRef.current) {
+        const accent = getComputedStyle(document.documentElement)
+          .getPropertyValue("--cursor-accent")
+          .trim()
+
+        ctx.lineCap = "round"
+        ctx.lineJoin = "round"
+        ctx.strokeStyle = accent
+        ctx.fillStyle = accent
+
+        // Continuous tapering streak: head (i=0) → thin tail.
+        for (let i = 0; i < points.length - 1; i++) {
+          const a = points[i]
+          const b = points[i + 1]
+          if (!a || !b) continue
+          const t = i / (points.length - 1)
+          const width = HEAD_WIDTH + (TAIL_WIDTH - HEAD_WIDTH) * t
+          const alpha = 1 - t * 0.88
+          ctx.beginPath()
+          ctx.moveTo(a.x, a.y)
+          ctx.lineTo(b.x, b.y)
+          ctx.globalAlpha = alpha
+          ctx.lineWidth = width
+          ctx.stroke()
+        }
+
+        // Small square tip (pencil mark).
+        const head = points[0]
+        if (head) {
+          ctx.globalAlpha = 1
+          const half = LEAD_SIZE / 2
+          ctx.fillRect(head.x - half, head.y - half, LEAD_SIZE, LEAD_SIZE)
+        }
+
+        ctx.globalAlpha = 1
       }
+
       rafRef.current = window.requestAnimationFrame(tick)
     }
     rafRef.current = window.requestAnimationFrame(tick)
 
     return () => {
-      document.documentElement.removeAttribute("data-custom-cursor")
       window.removeEventListener("pointermove", onMove)
+      window.removeEventListener("resize", resize)
       document.documentElement.removeEventListener("pointerleave", onLeave)
       document.documentElement.removeEventListener("pointerenter", onEnter)
       if (rafRef.current != null) {
@@ -108,25 +158,10 @@ export function SquareCursor() {
   if (!enabled) return null
 
   return (
-    <div
+    <canvas
+      ref={canvasRef}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-[100] overflow-hidden"
-    >
-      {Array.from({ length: TRAIL_COUNT }, (_, i) => (
-        <div
-          key={i}
-          ref={(el) => {
-            nodesRef.current[i] = el
-          }}
-          className="absolute top-0 left-0 will-change-transform"
-          style={{
-            width: SIZE_PX,
-            height: SIZE_PX,
-            background: "var(--cursor-accent)",
-            opacity: 0,
-          }}
-        />
-      ))}
-    </div>
+      className="pointer-events-none fixed inset-0 z-[100]"
+    />
   )
 }
