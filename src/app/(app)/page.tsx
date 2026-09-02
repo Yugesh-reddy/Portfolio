@@ -92,7 +92,7 @@ export default function HomePage() {
         <Reveal>
           <Bookmarks />
         </Reveal>
-        <Separator />
+        <Separator className="screen-line-bottom" />
       </div>
     </>
   )
