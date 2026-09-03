@@ -4,7 +4,7 @@ export const YUGESH_KNOWLEDGE = `
 - **Name**: Yugesh Reddy Sappidi (also goes by Yugesh)
 - **Role**: AI Engineer & Graduate Researcher specializing in Adversarial Robustness, AI Safety, and LLM Red Teaming.
 - **Location**: Chicago, IL, United States
-- **Bio**: AI Engineer working on adversarial robustness and AI safety across multiple modalities — language, vision-language, and multi-agent systems. His work focuses on two core questions: "How do you break an AI system?" and "How do you make it unbreakable?"
+- **Bio**: AI Engineer working on adversarial robustness and AI safety across multiple modalities: language, vision-language, and multi-agent systems. His work focuses on two core questions: "How do you break an AI system?" and "How do you make it unbreakable?"
 - **Contact & Links**:
   - Email: yugeshreddysappidi@gmail.com
   - GitHub: https://github.com/Yugesh-reddy
@@ -16,13 +16,13 @@ export const YUGESH_KNOWLEDGE = `
 
 1. **University of Illinois Chicago (UIC)**
    - Degree: Master of Science in Computer Science
-   - Duration: August 2024 – May 2026
+   - Duration: August 2024 - May 2026
    - GPA: 4.0 / 4.0
    - Relevant Coursework: Computer Algorithms, Permissionless Systems, Data Science, Agentic Systems, Visual Analytics, Natural Language Processing, Visual Data Science, Data & Algorithmic Fairness, Deep Learning for Computer Vision.
 
 2. **Sreenidhi Institute of Science and Technology (SNIST)**
    - Degree: Bachelor of Technology in Computer Engineering
-   - Duration: 2019 – 2023
+   - Duration: 2019 - 2023
 
 ---
 
@@ -30,7 +30,7 @@ export const YUGESH_KNOWLEDGE = `
 
 1. **University of Illinois Health (UI Health)**
    - Role: Graduate Research Assistant
-   - Duration: October 2025 – May 2026 (Chicago, IL)
+   - Duration: October 2025 - May 2026 (Chicago, IL)
    - Key Accomplishments:
      - Designed RAG (Retrieval-Augmented Generation) pipelines over clinical datasets, enabling natural-language querying of structured and unstructured patient records for faster clinical insights.
      - Built a FastAPI + GPT-4 + Pinecone vector retrieval backend with chunked embeddings, grounding LLM outputs in clinical sources to minimize hallucination (1.2s median latency).
@@ -40,7 +40,7 @@ export const YUGESH_KNOWLEDGE = `
 
 2. **Grohubz**
    - Role: Web Development & Design Intern
-   - Duration: June 2023 – August 2023
+   - Duration: June 2023 - August 2023
    - Key Accomplishments:
      - Built responsive UIs for an Instagram DM automation platform in React.js, boosting user engagement by 19%.
      - Implemented state management with React Hooks and Redux, reducing data-retrieval time by 40% and improving overall performance by 25%.
@@ -51,7 +51,7 @@ export const YUGESH_KNOWLEDGE = `
 
 ## Featured Research & Projects
 
-1. **MediCS — Adversarial Robustness for Medical LLMs** (01.2026)
+1. **MediCS - Adversarial Robustness for Medical LLMs** (01.2026)
    - Link: https://github.com/Yugesh-reddy/MediCS-Red-Teaming
    - Skills: PyTorch, Transformers, TRL (SFT + DPO), PEFT / LoRA, Red Teaming.
    - Summary: An agentic adversarial-training framework for medical LLM safety, addressing how safety alignment degrades on non-English and code-switched inputs.
@@ -61,7 +61,7 @@ export const YUGESH_KNOWLEDGE = `
      - MediCS-500: A benchmark of adversarial medical prompts across 6 languages paired with benign twins to measure jailbreak susceptibility and over-refusal.
      - Demonstrates that multilingual safety gaps are algorithmic fairness and disparate-impact problems.
 
-2. **AdaTTT — Adaptive Test-Time Training for Vision-Language Models** (01.2026)
+2. **AdaTTT - Adaptive Test-Time Training for Vision-Language Models** (01.2026)
    - Link: https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training
    - Skills: PyTorch, ViT + BERT, Test-Time Training (TTT), MAE Self-Supervision, Gradio.
    - Summary: Adaptive test-time training system for Visual Question Answering (VQA) that adapts models per-input only when compute is warranted.
@@ -75,12 +75,12 @@ export const YUGESH_KNOWLEDGE = `
    - Skills: Python, RAG, Self-Consistency, ReAct, FAISS / Chroma.
    - Summary: Benchmark and inference pipeline for grounded multi-step reasoning combining Self-Consistency decoding, ReAct agent loops, and RAG over vector databases. Evaluated on GSM8K and TruthfulQA under adversarial pressure.
 
-4. **Melanoma Tissue Volumes — Microscopy Analysis Dashboard** (09.2025 – 02.2026)
+4. **Melanoma Tissue Volumes - Microscopy Analysis Dashboard** (09.2025 - 02.2026)
    - Link: https://github.com/Yugesh-reddy/Melanoma-Tissue-Volumes
    - Skills: React 18, Three.js, Vite, WebGL, CyCIF.
    - Summary: Interactive GPU-accelerated 3D WebGL visualization and analysis dashboard for cyclic immunofluorescence (CyCIF) microscopy biopsy tissue with multi-channel biomarker thresholding and statistical suites.
 
-5. **Fleet — Flutter Road-Trip Planner & Discovery** (01.2023 – 10.2023)
+5. **Fleet - Flutter Road-Trip Planner & Discovery** (01.2023 - 10.2023)
    - Link: https://github.com/Yugesh-reddy/Fleet--Flutter-Travel-App
    - Skills: Flutter / Dart, Firebase, Google Maps API, Google Places API.
    - Summary: Cross-platform road-trip planning and route optimization app.
@@ -101,7 +101,8 @@ export const YUGESH_KNOWLEDGE = `
 ## Certifications
 
 1. **AWS Certified AI Practitioner** (Amazon Web Services, Issued July 2026)
-2. **The Complete 2024 Web Development Bootcamp** (Udemy, Issued January 2024)
+2. **Basic Life Support (BLS) Provider** (American Heart Association, Issued April 2025)
+3. **The Complete 2024 Web Development Bootcamp** (Udemy, Issued January 2024)
 
 ---
 
