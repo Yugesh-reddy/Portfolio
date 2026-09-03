@@ -1,7 +1,14 @@
 import React from "react"
-import { SparklesIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+
+export function EveeIcon(props: React.ComponentProps<"svg">) {
+  return (
+    <svg viewBox="0 0 100 100" fill="currentColor" aria-hidden {...props}>
+      <path d="M28 15h57v18H46a18 18 0 0 1-18-18ZM15 41h39a18 18 0 0 1 18 18H15ZM28 67h57v18H46a18 18 0 0 1-18-18Z" />
+    </svg>
+  )
+}
 
 export function EveeAvatar({
   className,
@@ -11,27 +18,27 @@ export function EveeAvatar({
   size?: "sm" | "md" | "lg"
 }) {
   const sizeClasses = {
-    sm: "size-5 text-xs",
-    md: "size-7 text-sm",
-    lg: "size-9 text-base",
+    sm: "size-6 rounded-lg",
+    md: "size-8 rounded-xl",
+    lg: "size-11 rounded-2xl",
   }
 
   const iconSizes = {
-    sm: "size-3",
-    md: "size-4",
-    lg: "size-5",
+    sm: "size-3.5",
+    md: "size-5",
+    lg: "size-7",
   }
 
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-amber-500/20 via-primary/20 to-indigo-500/20 text-primary ring-1 ring-primary/30 dark:from-amber-400/15 dark:via-primary/25 dark:to-indigo-400/20 dark:ring-primary/40",
+        "flex shrink-0 items-center justify-center border border-border/80 bg-muted/60 text-foreground shadow-xs select-none dark:bg-neutral-800/80",
         sizeClasses[size],
         className
       )}
       aria-label="Evee AI"
     >
-      <SparklesIcon className={cn("fill-current/20", iconSizes[size])} />
+      <EveeIcon className={iconSizes[size]} />
     </div>
   )
 }
