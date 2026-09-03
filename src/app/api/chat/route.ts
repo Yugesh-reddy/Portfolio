@@ -1,118 +1,154 @@
 import { GoogleGenAI } from "@google/genai"
 
-import { EVEE_SYSTEM_PROMPT } from "@/features/evee/prompts/system-prompt"
+import { parseChatRequest } from "@/features/evee/lib/chat-contract"
+import { getPublicChatError } from "@/features/evee/lib/chat-errors"
+import {
+  EVEE_GENERATION_CONFIG,
+  EVEE_MODEL,
+} from "@/features/evee/lib/chat-model"
+import { createEveeSystemPrompt } from "@/features/evee/prompts/system-prompt"
 
 export const runtime = "nodejs"
 
-type Message = {
-  role: "user" | "assistant"
-  content: string
+const REQUEST_TIMEOUT_MS = 25_000
+
+type GeminiStream = Awaited<
+  ReturnType<GoogleGenAI["models"]["generateContentStream"]>
+>
+
+function jsonError(message: string, status: number) {
+  return Response.json(
+    { error: message },
+    {
+      status,
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    }
+  )
 }
 
-export async function POST(req: Request) {
+async function findFirstTextChunk(stream: GeminiStream) {
+  const iterator = stream[Symbol.asyncIterator]()
+
+  while (true) {
+    const result = await iterator.next()
+    if (result.done) return null
+
+    const text = result.value.text
+    if (text) return { iterator, text }
+  }
+}
+
+async function startGeminiStream(
+  ai: GoogleGenAI,
+  contents: Array<{
+    role: "user" | "model"
+    parts: Array<{ text: string }>
+  }>,
+  signal: AbortSignal,
+  systemInstruction: string
+) {
+  const stream = await ai.models.generateContentStream({
+    model: EVEE_MODEL,
+    contents,
+    config: {
+      ...EVEE_GENERATION_CONFIG,
+      abortSignal: signal,
+      systemInstruction,
+    },
+  })
+  const startedStream = await findFirstTextChunk(stream)
+
+  if (!startedStream) throw new Error("Gemini returned an empty response.")
+  return startedStream
+}
+
+export async function POST(request: Request) {
+  let requestBody: unknown
+
   try {
-    const { messages } = (await req.json()) as { messages: Message[] }
+    requestBody = await request.json()
+  } catch {
+    return jsonError("That question could not be processed.", 400)
+  }
 
-    if (!messages || !Array.isArray(messages) || messages.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Messages array is required." }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      )
-    }
+  const parsedRequest = parseChatRequest(requestBody)
+  if (!parsedRequest.success) {
+    return jsonError(
+      "That conversation is invalid or too long. Start a new chat and try again.",
+      400
+    )
+  }
 
-    const apiKey =
-      process.env.GEMINI_API_KEY ||
-      process.env.GOOGLE_GENAI_API_KEY ||
-      process.env.GOOGLE_API_KEY
+  const apiKey =
+    process.env.GEMINI_API_KEY ??
+    process.env.GOOGLE_GENAI_API_KEY ??
+    process.env.GOOGLE_API_KEY
 
-    // If API key is not configured, return a helpful fallback message explaining how to set the key
-    if (!apiKey) {
-      const lastUserMessage =
-        [...messages].reverse().find((m) => m.role === "user")?.content || ""
+  if (!apiKey?.trim()) {
+    console.error("Evee chat is unavailable: no Gemini API key is configured.")
+    return jsonError(
+      "Evee is unavailable right now. Please try again later.",
+      503
+    )
+  }
 
-      const fallbackText = `Hi! I'm **Evee**, Yugesh's AI assistant. 
+  const signal = AbortSignal.any([
+    request.signal,
+    AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  ])
+  const contents = parsedRequest.data.messages.map((message) => ({
+    role: message.role === "assistant" ? ("model" as const) : ("user" as const),
+    parts: [{ text: message.content }],
+  }))
+  const systemInstruction = createEveeSystemPrompt(parsedRequest.data.messages)
 
-I'm ready to answer questions about Yugesh's research in **AI Safety**, his projects like **MediCS**, his experience at **UI Health**, and his background!
-
-> [!NOTE]
-> To enable live responses powered by Google Gemini, please add \`GEMINI_API_KEY=your_key_here\` to your \`.env.local\` file.
-
-You asked: *"${lastUserMessage}"*
-
-Yugesh is an AI Engineer and Graduate Researcher at the University of Illinois Chicago (MS CS, GPA 4.0/4.0) specializing in adversarial robustness and AI safety. His work explores how modern LLMs fail under adversarial pressure and designs adaptive defense pipelines.`
-
-      const encoder = new TextEncoder()
-      const stream = new ReadableStream({
-        async start(controller) {
-          // Stream the fallback text smoothly
-          const words = fallbackText.split(" ")
-          for (const word of words) {
-            controller.enqueue(encoder.encode(word + " "))
-            await new Promise((r) => setTimeout(r, 20))
-          }
-          controller.close()
-        },
-      })
-
-      return new Response(stream, {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Transfer-Encoding": "chunked",
-        },
-      })
-    }
-
-    const ai = new GoogleGenAI({ apiKey })
-
-    // Format messages for Gemini API
-    const contents = messages.map((m) => ({
-      role: m.role === "assistant" ? ("model" as const) : ("user" as const),
-      parts: [{ text: m.content }],
-    }))
-
-    const responseStream = await ai.models.generateContentStream({
-      model: "gemini-2.5-flash",
+  try {
+    const ai = new GoogleGenAI({ apiKey: apiKey.trim() })
+    const { iterator, text: firstText } = await startGeminiStream(
+      ai,
       contents,
-      config: {
-        systemInstruction: EVEE_SYSTEM_PROMPT,
-        temperature: 0.4,
-      },
-    })
-
+      signal,
+      systemInstruction
+    )
     const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      async start(controller) {
+
+    const responseStream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(firstText))
+      },
+      async pull(controller) {
         try {
-          for await (const chunk of responseStream) {
-            const text = chunk.text
-            if (text) {
-              controller.enqueue(encoder.encode(text))
-            }
+          const result = await iterator.next()
+
+          if (result.done) {
+            controller.close()
+            return
           }
-          controller.close()
+
+          const chunk = result.value.text
+          if (chunk) controller.enqueue(encoder.encode(chunk))
         } catch (error) {
           controller.error(error)
         }
       },
-    })
-
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Transfer-Encoding": "chunked",
+      async cancel() {
+        await iterator.return?.(undefined)
       },
     })
-  } catch (error: unknown) {
-    console.error("Error in Evee chat API:", error)
-    const message =
-      error instanceof Error ? error.message : "Failed to process chat request"
 
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
+    return new Response(responseStream, {
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+      },
     })
+  } catch (error) {
+    console.error("Evee chat request failed.", error)
+    const publicError = getPublicChatError(error)
+    return jsonError(publicError.message, publicError.status)
   }
 }
