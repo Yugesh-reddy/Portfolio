@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "@bprogress/next/app"
 import {
   BookmarkIcon,
@@ -14,10 +14,10 @@ import {
   MonitorIcon,
   MoonStarIcon,
   RssIcon,
-  SparklesIcon,
   SunMediumIcon,
   TextInitialIcon,
 } from "lucide-react"
+import { motion, useReducedMotion } from "motion/react"
 import { useTheme } from "next-themes"
 import { useHotkeys } from "react-hotkeys-hook"
 
@@ -35,7 +35,10 @@ import {
   CommandShortcut,
 } from "@/components/ui/command"
 import type { DocPreview } from "@/features/doc/types/document"
+import { EveeIcon } from "@/features/evee/components/evee-avatar"
 import { EveeChat } from "@/features/evee/components/evee-chat"
+import { MAX_MESSAGE_LENGTH } from "@/features/evee/lib/chat-limits"
+import { getPanelPresentation } from "@/features/evee/lib/chat-surface"
 import { SOCIAL_LINKS } from "@/features/portfolio/data/social-links"
 
 import { Icons } from "./icons"
@@ -154,6 +157,8 @@ export function CommandMenu({
   const [mode, setMode] = useState<"command" | "chat">("command")
   const [searchValue, setSearchValue] = useState("")
   const [chatInitialQuery, setChatInitialQuery] = useState("")
+  const commandInputRef = useRef<HTMLInputElement>(null)
+  const reduceMotion = useReducedMotion() ?? false
 
   const [selectedCommandKind, setSelectedCommandKind] =
     useState<CommandKind | null>(null)
@@ -169,6 +174,15 @@ export function CommandMenu({
       setSelectedCommandKind(null)
     }
   }, [])
+
+  useEffect(() => {
+    if (!open || mode !== "command") return
+
+    const frameId = requestAnimationFrame(() =>
+      commandInputRef.current?.focus()
+    )
+    return () => cancelAnimationFrame(frameId)
+  }, [mode, open])
 
   useHotkeys(
     "mod+k, slash",
@@ -256,7 +270,7 @@ export function CommandMenu({
   }, [])
 
   const startEveeChat = useCallback((query?: string) => {
-    setChatInitialQuery(query || "")
+    setChatInitialQuery(query?.slice(0, MAX_MESSAGE_LENGTH) || "")
     setMode("chat")
     trackEvent({
       name: "command_menu_action",
@@ -266,6 +280,12 @@ export function CommandMenu({
       },
     })
   }, [])
+
+  const chatPanel = getPanelPresentation(mode, "chat", reduceMotion)
+  const commandPanel = getPanelPresentation(mode, "command", reduceMotion)
+  const panelTransition = reduceMotion
+    ? { duration: 0 }
+    : { duration: 0.22, ease: [0.77, 0, 0.175, 1] as const }
 
   return (
     <>
@@ -281,54 +301,69 @@ export function CommandMenu({
         }}
       />
 
-      <CommandDialog open={open} onOpenChange={handleOpenChange}>
-        {/* Navigation / Ask Evee mode switch tab bar */}
-        <div className="flex items-center justify-between border-b border-border/50 bg-muted/20 px-3 py-1.5">
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setMode("command")}
-              className={cn(
-                "cursor-pointer rounded-md px-2.5 py-1 text-xs font-medium transition-colors active:scale-95",
-                mode === "command"
-                  ? "bg-background text-foreground shadow-xs ring-1 ring-border/50"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              Navigation
-            </button>
-            <button
-              type="button"
-              onClick={() => startEveeChat(searchValue)}
-              className={cn(
-                "flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors active:scale-95",
-                mode === "chat"
-                  ? "bg-primary/15 font-semibold text-primary shadow-xs ring-1 ring-primary/30"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              <SparklesIcon className="size-3 text-amber-500" />
-              Ask Evee
-            </button>
-          </div>
-        </div>
-
-        {mode === "chat" ? (
-          <EveeChat
-            initialQuery={chatInitialQuery}
-            onBack={() => {
-              setMode("command")
-              setChatInitialQuery("")
+      <CommandDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        title={mode === "chat" ? "Ask Evee" : "Command Palette"}
+        description={
+          mode === "chat"
+            ? "Ask questions about Yugesh's work and experience."
+            : "Search for a command to run."
+        }
+      >
+        <motion.div
+          layout={reduceMotion ? false : "size"}
+          transition={{ layout: panelTransition }}
+          className="relative w-full overflow-hidden"
+        >
+          <motion.div
+            initial={false}
+            aria-hidden={chatPanel.ariaHidden}
+            inert={chatPanel.inert}
+            animate={{
+              opacity: chatPanel.opacity,
+              transform: chatPanel.transform,
+              filter: chatPanel.filter,
             }}
-          />
-        ) : (
-          <>
+            transition={panelTransition}
+            className={cn(
+              "w-full",
+              mode !== "chat" && "pointer-events-none absolute inset-0"
+            )}
+          >
+            <EveeChat
+              active={mode === "chat"}
+              initialQuery={chatInitialQuery}
+              onBack={() => {
+                setMode("command")
+                setChatInitialQuery("")
+              }}
+              onNavigate={() => handleOpenChange(false)}
+            />
+          </motion.div>
+
+          <motion.div
+            initial={false}
+            aria-hidden={commandPanel.ariaHidden}
+            inert={commandPanel.inert}
+            animate={{
+              opacity: commandPanel.opacity,
+              transform: commandPanel.transform,
+              filter: commandPanel.filter,
+            }}
+            transition={panelTransition}
+            className={cn(
+              "w-full",
+              mode !== "command" && "pointer-events-none absolute inset-0"
+            )}
+          >
             <CommandMenuInput
+              inputRef={commandInputRef}
               value={searchValue}
               onValueChange={setSearchValue}
             />
 
-            <div className="rounded-xl bg-background ring-1 ring-border">
+            <div className="mx-1 rounded-xl bg-background ring-1 ring-border">
               <CommandList className="min-h-80 supports-timeline-scroll:scroll-fade-effect-y">
                 <CommandEmpty className="py-6 text-center text-sm">
                   <p className="text-muted-foreground">
@@ -339,38 +374,45 @@ export function CommandMenu({
                       variant="outline"
                       size="sm"
                       onClick={() => startEveeChat(searchValue.trim())}
-                      className="mt-3 gap-1.5 border-primary/30 text-xs text-primary hover:bg-primary/10"
+                      className="mt-3 cursor-pointer gap-1.5 text-xs active:scale-95"
                     >
-                      <SparklesIcon className="size-3.5 text-amber-500" />
+                      <EveeIcon className="size-3.5" />
                       Ask Evee &ldquo;{searchValue}&rdquo;
                     </Button>
                   )}
                 </CommandEmpty>
 
-                {searchValue.trim().length > 0 && (
-                  <CommandGroup heading="AI Assistant">
-                    <CommandMenuItem
-                      value={`ask-evee-${searchValue}`}
-                      keywords={[
-                        "ask",
-                        "evee",
-                        "ai",
-                        "chat",
-                        "yugesh",
-                        ...searchValue.toLowerCase().split(" "),
-                      ]}
-                      onHighlight={() => setSelectedCommandKind("ai")}
-                      onSelect={() => startEveeChat(searchValue.trim())}
-                      className="border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10"
-                    >
-                      <SparklesIcon className="size-4 shrink-0 text-amber-500" />
-                      <span className="font-medium">
-                        Ask Evee: &ldquo;{searchValue}&rdquo;
-                      </span>
-                      <CommandShortcut>↵</CommandShortcut>
-                    </CommandMenuItem>
-                  </CommandGroup>
-                )}
+                <CommandGroup heading="AI Assistant">
+                  <CommandMenuItem
+                    value={
+                      searchValue.trim()
+                        ? `ask-evee-${searchValue}`
+                        : "ask-evee"
+                    }
+                    keywords={[
+                      "ask",
+                      "evee",
+                      "ai",
+                      "chat",
+                      "yugesh",
+                      "research",
+                      "projects",
+                      "skills",
+                      ...(searchValue.trim()
+                        ? searchValue.toLowerCase().split(" ")
+                        : []),
+                    ]}
+                    onHighlight={() => setSelectedCommandKind("ai")}
+                    onSelect={() => startEveeChat(searchValue.trim())}
+                  >
+                    <EveeIcon />
+                    <p className="line-clamp-1">
+                      {searchValue.trim()
+                        ? `Ask Evee: "${searchValue}"`
+                        : "Ask Evee"}
+                    </p>
+                  </CommandMenuItem>
+                </CommandGroup>
 
                 <CommandLinkGroup
                   heading="Portfolio"
@@ -431,8 +473,8 @@ export function CommandMenu({
             </div>
 
             <CommandMenuFooter selectedCommandKind={selectedCommandKind} />
-          </>
-        )}
+          </motion.div>
+        </motion.div>
       </CommandDialog>
     </>
   )
@@ -473,9 +515,11 @@ function CommandMenuTrigger({ ...props }: React.ComponentProps<typeof Button>) {
 }
 
 function CommandMenuInput({
+  inputRef,
   value,
   onValueChange,
 }: {
+  inputRef: React.Ref<HTMLInputElement>
   value: string
   onValueChange: (value: string) => void
 }) {
@@ -497,9 +541,13 @@ function CommandMenuInput({
 
   return (
     <CommandInput
+      ref={inputRef}
       placeholder="Search or ask Evee…"
       value={value}
-      onValueChange={onValueChange}
+      maxLength={MAX_MESSAGE_LENGTH}
+      onValueChange={(nextValue) =>
+        onValueChange(nextValue.slice(0, MAX_MESSAGE_LENGTH))
+      }
     />
   )
 }
