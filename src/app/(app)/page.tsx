@@ -11,8 +11,8 @@ import { Education } from "@/features/portfolio/components/education"
 import { Experiences } from "@/features/portfolio/components/experiences"
 import { GitHubContributions } from "@/features/portfolio/components/github-contributions"
 import { Insights } from "@/features/portfolio/components/insights"
+import { IntroSection } from "@/features/portfolio/components/intro/intro-section"
 import { Overview } from "@/features/portfolio/components/overview"
-import { ProfileHeader } from "@/features/portfolio/components/profile-header"
 import { Projects } from "@/features/portfolio/components/projects"
 import { SocialLinks } from "@/features/portfolio/components/social-links"
 import { TechStack } from "@/features/portfolio/components/tech-stack"
@@ -36,9 +36,7 @@ export default function HomePage() {
       />
 
       <div className="mx-auto md:max-w-3xl [&_[id]]:scroll-mt-22">
-        <Reveal delay={0.05}>
-          <ProfileHeader />
-        </Reveal>
+        <IntroSection />
         <Separator />
 
         <Reveal delay={0.12}>
@@ -94,7 +92,7 @@ export default function HomePage() {
         <Reveal>
           <Bookmarks />
         </Reveal>
-        <Separator />
+        <Separator className="screen-line-bottom" />
       </div>
     </>
   )

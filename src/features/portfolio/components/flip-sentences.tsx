@@ -18,13 +18,13 @@ export function FlipSentences({
   return (
     <div ref={ref} {...props}>
       <TextFlip
-        className="font-mono text-sm text-balance text-muted-foreground"
+        className="shimmer font-mono text-sm text-balance text-muted-foreground shimmer-duration-1500 shimmer-once not-dark:shimmer-color-foreground"
         variants={{
           initial: { y: -10, opacity: 0 },
           animate: { y: -1, opacity: 1 },
           exit: { y: 10, opacity: 0 },
         }}
-        interval={1.5}
+        interval={3}
         play={isPageInView && isInView}
       >
         {children}

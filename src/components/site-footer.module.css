@@ -1,0 +1,76 @@
+.footer {
+  --ink: var(--foreground);
+  /* Keep the hero's neutral palette with a little more outline contrast. */
+  --stroke: color-mix(in oklab, var(--foreground) 24%, var(--background));
+
+  margin: 24px 8px 0;
+  background: var(--background);
+  color: var(--ink);
+}
+
+:global(.dark) .footer {
+  --stroke: color-mix(in oklab, var(--foreground) 34%, var(--background));
+}
+
+.wordmark {
+  position: relative;
+  overflow: hidden;
+}
+
+.wordmarkSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.letterOutlines {
+  fill: none;
+  stroke: var(--stroke);
+  stroke-width: 0.85;
+}
+.construction {
+  stroke: var(--stroke);
+  stroke-width: 0.55;
+  opacity: 0.8;
+}
+.ink {
+  fill: var(--ink);
+  pointer-events: none;
+}
+.inkResidue {
+  fill: color-mix(in oklab, var(--foreground) 24%, var(--background));
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .footer {
+    margin-top: 16px;
+  }
+
+  .wordmark {
+    padding-block: 8px;
+  }
+
+  .letterOutlines {
+    stroke-width: 0.65;
+  }
+
+  .construction {
+    stroke-width: 0.4;
+    opacity: 0.72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink,
+  .inkResidue {
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .footer {
+    --ink: CanvasText;
+    --stroke: CanvasText;
+    background: Canvas;
+  }
+}

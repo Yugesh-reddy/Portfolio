@@ -47,13 +47,13 @@ function CommandDialog({
 
       <DialogContent
         data-slot="command-dialog-content"
-        className="rounded-2xl bg-surface p-0 outline-none max-sm:top-16 max-sm:translate-y-0 sm:max-w-lg"
+        className="overflow-hidden rounded-2xl bg-surface p-0 outline-none max-sm:top-16 max-sm:translate-y-0 sm:max-w-lg"
         showCloseButton={false}
         showOverlay={false}
       >
         <Command
           className={cn(
-            "px-1 outline-none",
+            "w-full outline-none",
             "**:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-input-wrapper]_svg]:size-5 **:[[cmdk-input]]:h-10",
             "**:[[cmdk-group]]:px-1",
             "**:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground",

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "@bprogress/next/app"
 import {
   BookmarkIcon,
@@ -17,10 +17,12 @@ import {
   SunMediumIcon,
   TextInitialIcon,
 } from "lucide-react"
+import { motion, useReducedMotion } from "motion/react"
 import { useTheme } from "next-themes"
 import { useHotkeys } from "react-hotkeys-hook"
 
 import { trackEvent } from "@/lib/events"
+import { cn } from "@/lib/utils"
 import { useClickSound } from "@/hooks/soundcn/use-click-sound"
 import { useMutationObserver } from "@/hooks/use-mutation-observer"
 import {
@@ -33,14 +35,18 @@ import {
   CommandShortcut,
 } from "@/components/ui/command"
 import type { DocPreview } from "@/features/doc/types/document"
+import { EveeIcon } from "@/features/evee/components/evee-avatar"
+import { EveeChat } from "@/features/evee/components/evee-chat"
+import { MAX_MESSAGE_LENGTH } from "@/features/evee/lib/chat-limits"
+import { getPanelPresentation } from "@/features/evee/lib/chat-surface"
 import { SOCIAL_LINKS } from "@/features/portfolio/data/social-links"
 
-import { PixelMark } from "./pixel-mark"
 import { Icons } from "./icons"
+import { PixelMark } from "./pixel-mark"
 import { Button } from "./ui/button"
 import { Kbd, KbdGroup } from "./ui/kbd"
 
-type CommandKind = "command" | "page" | "link"
+type CommandKind = "command" | "page" | "link" | "ai"
 
 type CommandLinkItem = {
   title: string
@@ -59,7 +65,6 @@ const PORTFOLIO_LINKS: CommandLinkItem[] = [
     href: "/",
     kind: "page",
     icon: <PixelMark />,
-    shortcut: "GH",
   },
   {
     title: "About",
@@ -102,7 +107,6 @@ const PORTFOLIO_LINKS: CommandLinkItem[] = [
     href: "/blog",
     kind: "page",
     icon: <Icons.news />,
-    shortcut: "GL",
   },
 ]
 
@@ -150,19 +154,44 @@ export function CommandMenu({
   const { setTheme } = useTheme()
 
   const [open, setOpen] = useState(false)
+  const [mode, setMode] = useState<"command" | "chat">("command")
+  const [searchValue, setSearchValue] = useState("")
+  const [chatInitialQuery, setChatInitialQuery] = useState("")
+  const commandInputRef = useRef<HTMLInputElement>(null)
+  const reduceMotion = useReducedMotion() ?? false
 
   const [selectedCommandKind, setSelectedCommandKind] =
     useState<CommandKind | null>(null)
 
   const [click] = useClickSound()
 
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    setOpen(nextOpen)
+    if (!nextOpen) {
+      setMode("command")
+      setSearchValue("")
+      setChatInitialQuery("")
+      setSelectedCommandKind(null)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!open || mode !== "command") return
+
+    const frameId = requestAnimationFrame(() =>
+      commandInputRef.current?.focus()
+    )
+    return () => cancelAnimationFrame(frameId)
+  }, [mode, open])
+
   useHotkeys(
     "mod+k, slash",
     (e) => {
       e.preventDefault()
 
-      setOpen((open) => {
-        if (!open) {
+      setOpen((isOpen) => {
+        const next = !isOpen
+        if (next) {
           trackEvent({
             name: "open_command_menu",
             properties: {
@@ -170,8 +199,12 @@ export function CommandMenu({
               key: e.key === "/" ? "/" : e.metaKey ? "cmd+k" : "ctrl+k",
             },
           })
+        } else {
+          setMode("command")
+          setSearchValue("")
+          setChatInitialQuery("")
         }
-        return !open
+        return next
       })
     },
     { enabled: enabledHotkeys }
@@ -179,7 +212,7 @@ export function CommandMenu({
 
   const handleOpenLink = useCallback(
     (href: string, openInNewTab = false) => {
-      setOpen(false)
+      handleOpenChange(false)
 
       trackEvent({
         name: "command_menu_action",
@@ -196,13 +229,13 @@ export function CommandMenu({
         router.push(href)
       }
     },
-    [router]
+    [handleOpenChange, router]
   )
 
   const createThemeHandler = useCallback(
     (theme: "light" | "dark" | "system") => () => {
       click()
-      setOpen(false)
+      handleOpenChange(false)
 
       trackEvent({
         name: "command_menu_action",
@@ -214,7 +247,7 @@ export function CommandMenu({
 
       setTheme(theme)
     },
-    [click, setTheme]
+    [click, handleOpenChange, setTheme]
   )
 
   const blogLinks = useMemo(
@@ -236,6 +269,24 @@ export function CommandMenu({
     setSelectedCommandKind("command")
   }, [])
 
+  const startEveeChat = useCallback((query?: string) => {
+    setChatInitialQuery(query?.slice(0, MAX_MESSAGE_LENGTH) || "")
+    setMode("chat")
+    trackEvent({
+      name: "command_menu_action",
+      properties: {
+        action: "ask_evee",
+        query: query || "",
+      },
+    })
+  }, [])
+
+  const chatPanel = getPanelPresentation(mode, "chat", reduceMotion)
+  const commandPanel = getPanelPresentation(mode, "command", reduceMotion)
+  const panelTransition = reduceMotion
+    ? { duration: 0 }
+    : { duration: 0.22, ease: [0.77, 0, 0.175, 1] as const }
+
   return (
     <>
       <CommandMenuTrigger
@@ -250,72 +301,180 @@ export function CommandMenu({
         }}
       />
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandMenuInput />
+      <CommandDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        title={mode === "chat" ? "Ask Evee" : "Command Palette"}
+        description={
+          mode === "chat"
+            ? "Ask questions about Yugesh's work and experience."
+            : "Search for a command to run."
+        }
+      >
+        <motion.div
+          layout={reduceMotion ? false : "size"}
+          transition={{ layout: panelTransition }}
+          className="relative w-full overflow-hidden"
+        >
+          <motion.div
+            initial={false}
+            aria-hidden={chatPanel.ariaHidden}
+            inert={chatPanel.inert}
+            animate={{
+              opacity: chatPanel.opacity,
+              transform: chatPanel.transform,
+              filter: chatPanel.filter,
+            }}
+            transition={panelTransition}
+            className={cn(
+              "w-full",
+              mode !== "chat" && "pointer-events-none absolute inset-0"
+            )}
+          >
+            <EveeChat
+              active={mode === "chat"}
+              initialQuery={chatInitialQuery}
+              onBack={() => {
+                setMode("command")
+                setChatInitialQuery("")
+              }}
+              onNavigate={() => handleOpenChange(false)}
+            />
+          </motion.div>
 
-        <div className="rounded-xl bg-background ring-1 ring-border">
-          <CommandList className="min-h-80 supports-timeline-scroll:scroll-fade-effect-y">
-            <CommandEmpty>No results found.</CommandEmpty>
-
-            <CommandLinkGroup
-              heading="Portfolio"
-              links={PORTFOLIO_LINKS}
-              onLinkHighlight={handleLinkHighlight}
-              onLinkSelect={handleOpenLink}
+          <motion.div
+            initial={false}
+            aria-hidden={commandPanel.ariaHidden}
+            inert={commandPanel.inert}
+            animate={{
+              opacity: commandPanel.opacity,
+              transform: commandPanel.transform,
+              filter: commandPanel.filter,
+            }}
+            transition={panelTransition}
+            className={cn(
+              "w-full",
+              mode !== "command" && "pointer-events-none absolute inset-0"
+            )}
+          >
+            <CommandMenuInput
+              inputRef={commandInputRef}
+              value={searchValue}
+              onValueChange={setSearchValue}
             />
 
-            <CommandLinkGroup
-              heading="Blog"
-              links={blogLinks}
-              fallbackIcon={<Icons.news />}
-              onLinkHighlight={handleLinkHighlight}
-              onLinkSelect={handleOpenLink}
-            />
+            <div className="mx-1 rounded-xl bg-background ring-1 ring-border">
+              <CommandList className="min-h-80 supports-timeline-scroll:scroll-fade-effect-y">
+                <CommandEmpty className="py-6 text-center text-sm">
+                  <p className="text-muted-foreground">
+                    No navigation matches found.
+                  </p>
+                  {searchValue.trim() && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startEveeChat(searchValue.trim())}
+                      className="mt-3 cursor-pointer gap-1.5 text-xs active:scale-95"
+                    >
+                      <EveeIcon className="size-3.5" />
+                      Ask Evee &ldquo;{searchValue}&rdquo;
+                    </Button>
+                  )}
+                </CommandEmpty>
 
-            <CommandLinkGroup
-              heading="Social Links"
-              links={SOCIAL_LINK_ITEMS}
-              onLinkHighlight={handleLinkHighlight}
-              onLinkSelect={handleOpenLink}
-            />
+                <CommandGroup heading="AI Assistant">
+                  <CommandMenuItem
+                    value={
+                      searchValue.trim()
+                        ? `ask-evee-${searchValue}`
+                        : "ask-evee"
+                    }
+                    keywords={[
+                      "ask",
+                      "evee",
+                      "ai",
+                      "chat",
+                      "yugesh",
+                      "research",
+                      "projects",
+                      "skills",
+                      ...(searchValue.trim()
+                        ? searchValue.toLowerCase().split(" ")
+                        : []),
+                    ]}
+                    onHighlight={() => setSelectedCommandKind("ai")}
+                    onSelect={() => startEveeChat(searchValue.trim())}
+                  >
+                    <EveeIcon />
+                    <p className="line-clamp-1">
+                      {searchValue.trim()
+                        ? `Ask Evee: "${searchValue}"`
+                        : "Ask Evee"}
+                    </p>
+                  </CommandMenuItem>
+                </CommandGroup>
 
-            <CommandGroup heading="Theme">
-              <CommandMenuItem
-                keywords={["theme"]}
-                onHighlight={handleCommandHighlight}
-                onSelect={createThemeHandler("light")}
-              >
-                <SunMediumIcon />
-                Light
-              </CommandMenuItem>
-              <CommandMenuItem
-                keywords={["theme"]}
-                onHighlight={handleCommandHighlight}
-                onSelect={createThemeHandler("dark")}
-              >
-                <MoonStarIcon />
-                Dark
-              </CommandMenuItem>
-              <CommandMenuItem
-                keywords={["theme"]}
-                onHighlight={handleCommandHighlight}
-                onSelect={createThemeHandler("system")}
-              >
-                <MonitorIcon />
-                System
-              </CommandMenuItem>
-            </CommandGroup>
+                <CommandLinkGroup
+                  heading="Portfolio"
+                  links={PORTFOLIO_LINKS}
+                  onLinkHighlight={handleLinkHighlight}
+                  onLinkSelect={handleOpenLink}
+                />
 
-            <CommandLinkGroup
-              heading="Other"
-              links={OTHER_LINK_ITEMS}
-              onLinkHighlight={handleLinkHighlight}
-              onLinkSelect={handleOpenLink}
-            />
-          </CommandList>
-        </div>
+                <CommandLinkGroup
+                  heading="Blog"
+                  links={blogLinks}
+                  fallbackIcon={<Icons.news />}
+                  onLinkHighlight={handleLinkHighlight}
+                  onLinkSelect={handleOpenLink}
+                />
 
-        <CommandMenuFooter selectedCommandKind={selectedCommandKind} />
+                <CommandLinkGroup
+                  heading="Social Links"
+                  links={SOCIAL_LINK_ITEMS}
+                  onLinkHighlight={handleLinkHighlight}
+                  onLinkSelect={handleOpenLink}
+                />
+
+                <CommandGroup heading="Theme">
+                  <CommandMenuItem
+                    keywords={["theme"]}
+                    onHighlight={handleCommandHighlight}
+                    onSelect={createThemeHandler("light")}
+                  >
+                    <SunMediumIcon />
+                    Light
+                  </CommandMenuItem>
+                  <CommandMenuItem
+                    keywords={["theme"]}
+                    onHighlight={handleCommandHighlight}
+                    onSelect={createThemeHandler("dark")}
+                  >
+                    <MoonStarIcon />
+                    Dark
+                  </CommandMenuItem>
+                  <CommandMenuItem
+                    keywords={["theme"]}
+                    onHighlight={handleCommandHighlight}
+                    onSelect={createThemeHandler("system")}
+                  >
+                    <MonitorIcon />
+                    System
+                  </CommandMenuItem>
+                </CommandGroup>
+
+                <CommandLinkGroup
+                  heading="Other"
+                  links={OTHER_LINK_ITEMS}
+                  onLinkHighlight={handleLinkHighlight}
+                  onLinkSelect={handleOpenLink}
+                />
+              </CommandList>
+            </div>
+
+            <CommandMenuFooter selectedCommandKind={selectedCommandKind} />
+          </motion.div>
+        </motion.div>
       </CommandDialog>
     </>
   )
@@ -325,52 +484,70 @@ function CommandMenuTrigger({ ...props }: React.ComponentProps<typeof Button>) {
   return (
     <Button
       data-slot="command-menu-trigger"
-      className="gap-1.5 rounded-full text-muted-foreground shadow-none select-none hover:bg-background hover:text-muted-foreground dark:hover:bg-input/30"
-      variant="outline"
+      className="h-8 gap-2 rounded-lg border-none bg-transparent px-2 text-muted-foreground shadow-none transition-colors select-none hover:bg-muted hover:text-foreground dark:hover:bg-neutral-800 dark:hover:text-foreground"
+      variant="ghost"
       size="sm"
       {...props}
     >
-      <Icons.search />
+      <Icons.search className="size-4 shrink-0" />
 
       <span className="font-sans text-sm/4 font-medium sm:hidden">Search…</span>
 
-      <KbdGroup className="hidden sm:in-[.os-macos_&]:flex">
-        <Kbd className="w-5 min-w-5">⌘</Kbd>
-        <Kbd className="w-5 min-w-5">K</Kbd>
+      <KbdGroup className="hidden gap-1 sm:in-[.os-macos_&]:flex">
+        <Kbd className="size-5 min-w-5 rounded-[4px] p-0 text-xs font-normal">
+          ⌘
+        </Kbd>
+        <Kbd className="size-5 min-w-5 rounded-[4px] p-0 text-xs font-normal">
+          K
+        </Kbd>
       </KbdGroup>
 
-      <KbdGroup className="hidden sm:not-[.os-macos_&]:flex">
-        <Kbd>Ctrl</Kbd>
-        <Kbd className="w-5 min-w-5">K</Kbd>
+      <KbdGroup className="hidden gap-1 sm:not-[.os-macos_&]:flex">
+        <Kbd className="h-5 min-w-5 rounded-[4px] px-1 text-xs font-normal">
+          Ctrl
+        </Kbd>
+        <Kbd className="size-5 min-w-5 rounded-[4px] p-0 text-xs font-normal">
+          K
+        </Kbd>
       </KbdGroup>
     </Button>
   )
 }
 
-function CommandMenuInput() {
-  const [searchValue, setSearchValue] = useState("")
-
+function CommandMenuInput({
+  inputRef,
+  value,
+  onValueChange,
+}: {
+  inputRef: React.Ref<HTMLInputElement>
+  value: string
+  onValueChange: (value: string) => void
+}) {
   useEffect(() => {
-    if (searchValue.length >= 2) {
+    if (value.length >= 2) {
       const timeoutId = setTimeout(() => {
         trackEvent({
           name: "command_menu_search",
           properties: {
-            query: searchValue,
-            query_length: searchValue.length,
+            query: value,
+            query_length: value.length,
           },
         })
       }, 500)
 
       return () => clearTimeout(timeoutId)
     }
-  }, [searchValue])
+  }, [value])
 
   return (
     <CommandInput
-      placeholder="Type a command or search…"
-      value={searchValue}
-      onValueChange={setSearchValue}
+      ref={inputRef}
+      placeholder="Search or ask Evee…"
+      value={value}
+      maxLength={MAX_MESSAGE_LENGTH}
+      onValueChange={(nextValue) =>
+        onValueChange(nextValue.slice(0, MAX_MESSAGE_LENGTH))
+      }
     />
   )
 }
@@ -458,6 +635,7 @@ const ENTER_ACTION_LABELS: Record<CommandKind, string> = {
   command: "Run Command",
   page: "Go to Page",
   link: "Open Link",
+  ai: "Ask Evee",
 }
 
 function CommandMenuFooter({

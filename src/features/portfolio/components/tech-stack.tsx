@@ -1,5 +1,6 @@
 import { TECH_STACK } from "../data/tech-stack"
 import type { TechStack as TechStackType } from "../types/tech-stack"
+import { HandwrittenArrow, HandwrittenNote } from "./handwritten-note"
 import { Panel, PanelHeader, PanelTitle } from "./panel"
 
 const ID = "stack"
@@ -23,11 +24,12 @@ export function TechStack() {
               .toLowerCase()
               .replace(/[^a-z0-9]+/g, "-")
               .replace(/(^-|-$)/g, "")}`
+            const isToolsRow = category === "Tools & Design"
 
             return (
               <div
                 key={category}
-                className="grid items-start gap-y-2 border-b border-line py-4 last:border-none sm:grid-cols-[var(--col-left-width)_1fr]"
+                className="relative grid items-start gap-y-2 border-b border-line py-4 last:border-none sm:grid-cols-[var(--col-left-width)_1fr]"
               >
                 <div
                   id={categoryId}
@@ -73,6 +75,16 @@ export function TechStack() {
                     </li>
                   ))}
                 </ul>
+
+                {isToolsRow ? (
+                  <HandwrittenNote
+                    className="-top-1 right-full mr-2 hidden w-24 flex-col items-end lg:flex"
+                    aria-hidden
+                  >
+                    <span className="-rotate-6">tools I use</span>
+                    <HandwrittenArrow className="size-7 -scale-x-100 -rotate-6" />
+                  </HandwrittenNote>
+                ) : null}
               </div>
             )
           }

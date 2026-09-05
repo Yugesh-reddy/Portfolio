@@ -10,6 +10,7 @@ import {
 import { USER } from "@/features/portfolio/data/user"
 import type { User } from "@/features/portfolio/types/user"
 
+import { HandwrittenArrow, HandwrittenNote } from "../handwritten-note"
 import { Panel, PanelContent } from "../panel"
 import { CurrentLocalTimeItem } from "./current-local-time-item"
 import { EmailItem } from "./email-item"
@@ -56,8 +57,6 @@ export function Overview() {
 
           <CurrentLocalTimeItem timeZone={USER.timeZone} />
 
-          <EmailItem email={USER.email} />
-
           <IntroItem>
             <IntroItemIcon>
               <LinkIcon />
@@ -72,6 +71,8 @@ export function Overview() {
             </IntroItemContent>
           </IntroItem>
 
+          <EmailItem email={USER.email} />
+
           <IntroItem>
             <IntroItemIcon>{getGenderIcon(USER.gender)}</IntroItemIcon>
             <IntroItemContent aria-label={`Pronouns: ${USER.pronouns}`}>
@@ -81,6 +82,14 @@ export function Overview() {
 
           {/* Dotted divider between the two columns (matches chanhdai.com) */}
           <div className="pointer-events-none absolute top-px bottom-0 left-1/2 -z-1 w-px -translate-x-2.25 bg-[linear-gradient(to_bottom,var(--line)_4px,transparent_2px)] bg-size-[1px_6px] bg-repeat-y max-sm:hidden" />
+
+          <HandwrittenNote
+            className="bottom-0 left-full ml-2 hidden w-16 flex-col items-start lg:flex"
+            aria-hidden
+          >
+            <HandwrittenArrow className="size-7 -rotate-90" />
+            <span className="-mt-1 -rotate-3">say hi</span>
+          </HandwrittenNote>
         </div>
       </PanelContent>
     </Panel>

@@ -8,9 +8,16 @@ const ScrollToTop = dynamic(() =>
   import("@/components/scroll-to-top").then((mod) => mod.ScrollToTop)
 )
 
+const SquareCursor = dynamic(() =>
+  import("@/components/square-cursor").then((mod) => mod.SquareCursor)
+)
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="group/layout">
+    <div
+      id="top"
+      className="group/layout pb-[calc(--spacing(24)+env(safe-area-inset-bottom,0px))] sm:pb-12"
+    >
       <SiteHeader />
       <main className="max-w-screen overflow-x-clip px-2">{children}</main>
       <SiteFooter />
@@ -20,6 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <SiteBottomNav />
       <ScrollToTop />
+      <SquareCursor />
     </div>
   )
 }

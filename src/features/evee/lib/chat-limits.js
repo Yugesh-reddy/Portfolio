@@ -1,0 +1,3 @@
+export const MAX_MESSAGE_LENGTH = 600
+export const MAX_ASSISTANT_MESSAGE_LENGTH = 4_000
+export const MAX_REQUEST_MESSAGES = 11

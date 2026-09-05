@@ -42,7 +42,7 @@ Outside of structured coursework and research, I stay close to the leading edge 
     darkOn: "/yugesh.png",
   },
   ogImage: "/og.png",
-  namePronunciationUrl: "",
+  namePronunciationUrl: "/yugesh-name.mp3",
   timeZone: "America/Chicago",
   keywords: [
     "yugesh",
