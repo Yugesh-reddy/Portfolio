@@ -11,6 +11,15 @@ export const CERTIFICATIONS: Certification[] = [
       "https://www.credly.com/badges/7ae55924-7cee-432a-b257-88ba20eea3d3/public_url",
   },
   {
+    title: "Basic Life Support (BLS) Provider",
+    issuer: "American Heart Association",
+    issuerLogoURL: "/icons/aha.svg",
+    issueDate: "2025-04-09",
+    credentialID: "265411376692",
+    credentialURL:
+      "https://ecards.heart.org/student/eCards?cid=9A6E8C29-10F2-40AA-AB1D-C26028ACA102",
+  },
+  {
     title: "The Complete 2024 Web Development Bootcamp",
     issuer: "Udemy",
     issuerLogoURL: "/icons/udemy.svg",
