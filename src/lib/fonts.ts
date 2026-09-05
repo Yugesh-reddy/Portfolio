@@ -23,13 +23,6 @@ const fontHandwritten = Caveat({
   variable: "--font-caveat",
 })
 
-// const fontPixel = localFont({
-//   src: "../assets/fonts/DepartureMono-Regular.woff2",
-//   weight: "400",
-//   fallback: ["monospace"],
-//   variable: "--font-pixel",
-// })
-
 const pixelatedMSSansSerif = localFont({
   src: [
     {

@@ -10,13 +10,11 @@ import { Certifications } from "@/features/portfolio/components/certifications"
 import { Education } from "@/features/portfolio/components/education"
 import { Experiences } from "@/features/portfolio/components/experiences"
 import { GitHubContributions } from "@/features/portfolio/components/github-contributions"
-import { Insights } from "@/features/portfolio/components/insights"
 import { IntroSection } from "@/features/portfolio/components/intro/intro-section"
 import { Overview } from "@/features/portfolio/components/overview"
 import { Projects } from "@/features/portfolio/components/projects"
 import { SocialLinks } from "@/features/portfolio/components/social-links"
 import { TechStack } from "@/features/portfolio/components/tech-stack"
-import { Testimonials } from "@/features/portfolio/components/testimonials"
 import { USER } from "@/features/portfolio/data/user"
 
 export const metadata: Metadata = {

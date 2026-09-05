@@ -83,14 +83,12 @@ export const TECH_STACK: TechStack[] = [
     title: "LangChain",
     href: "https://www.langchain.com/",
     categories: ["LLM Ops"],
-    theme: true,
   },
   {
     key: "langgraph",
     title: "LangGraph",
     href: "https://www.langchain.com/langgraph",
     categories: ["LLM Ops"],
-    theme: true,
   },
   {
     key: "langsmith",
@@ -103,7 +101,6 @@ export const TECH_STACK: TechStack[] = [
     title: "Ollama",
     href: "https://ollama.com/",
     categories: ["LLM Ops"],
-    theme: true,
   },
   {
     key: "pinecone",
@@ -130,7 +127,6 @@ export const TECH_STACK: TechStack[] = [
     title: "Next.js",
     href: "https://nextjs.org/",
     categories: ["Frontend"],
-    theme: true,
   },
   {
     key: "tailwindcss",
@@ -143,7 +139,6 @@ export const TECH_STACK: TechStack[] = [
     title: "Three.js",
     href: "https://threejs.org/",
     categories: ["Frontend"],
-    theme: true,
   },
   {
     key: "d3js",
@@ -170,7 +165,6 @@ export const TECH_STACK: TechStack[] = [
     title: "Django",
     href: "https://www.djangoproject.com/",
     categories: ["Backend & Cloud"],
-    theme: true,
   },
   {
     key: "firebase",
@@ -209,7 +203,6 @@ export const TECH_STACK: TechStack[] = [
     title: "Linux",
     href: "https://www.linux.org/",
     categories: ["Tools & Design"],
-    theme: true,
   },
   {
     key: "git",
