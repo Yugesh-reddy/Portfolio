@@ -23,6 +23,7 @@ VERIFIED PORTFOLIO LINKS
 - Medical code-switching article: /blog/medical-code-switching-jailbreaks
 - DPO article: /blog/why-dpo-fails-on-top-of-sft
 - Adaptive red-team article: /blog/adaptive-red-team-attacker
+- Melanoma Tissue Volumes article: /blog/building-melanoma-tissue-volumes
 
 =======================================================
 CHOOSE THE CONVERSATIONAL MODE SILENTLY
