@@ -3,93 +3,151 @@ import type { Project } from "../types/projects"
 export const PROJECTS: Project[] = [
   {
     id: "medics",
-    title: "MediCS — Adversarial Robustness for Medical LLMs",
-    period: { start: "01.2026" },
+    title: "MediCS: Red-Teaming and Defending a Medical LLM",
+    period: { start: "02.2026", end: "05.2026" },
     link: "https://github.com/Yugesh-reddy/MediCS-Red-Teaming",
     skills: [
       "PyTorch",
-      "Transformers",
+      "Llama 3 / QLoRA",
       "TRL (SFT + DPO)",
-      "PEFT / LoRA",
+      "PEFT",
       "Red Teaming",
+      "Statistical Evaluation",
     ],
-    description: `An agentic adversarial-training framework for **medical LLM safety**, built on the finding that safety alignment degrades sharply on non-English and code-switched inputs relative to English.
+    description: `A closed-loop red-teaming and defense framework for medical LLMs, built around one uncomfortable finding: safety alignment holds in English and leaks badly the moment a prompt switches languages mid-sentence.
 
-- **Multilingual code-switching attack generation.** An agentic attacker constructs jailbreaks that mix languages mid-utterance to bypass safety classifiers aligned primarily in English.
-- **SFT + DPO defense pipeline.** The base model is hardened with Supervised Fine-Tuning, then preference-optimized with DPO to prefer safe completions — modern RLHF-style post-training without a separate reward model.
-- **MediCS-500 dataset.** A curated benchmark of adversarial medical prompts across six verified languages, each paired with a benign "twin" to measure jailbreak susceptibility *and* over-refusal.
-- **Measured outcome.** A high attack-success rate on the base model collapses dramatically after a single round of SFT, quantifying how brittle — and recoverable — multilingual safety is.
-- **Fairness framing.** When a model is safe in English but exploitable in other languages, the gap is a disparate-impact problem with language as the protected attribute.`,
+- **The attack.** An agentic red team runs 5 strategies across 6 low-resource languages and 6 harm categories. A Thompson-Sampling bandit per category learns which strategy actually lands, instead of firing a fixed battery of templates and reporting the total.
+- **What it exposed.** 27.6% attack success rate on Llama-3-8B-Instruct. The attacks then transfer *upward* to models they were never tuned against: 61.7% on Mistral-7B, 51.6% on Qwen-2.5-7B.
+- **The defense.** One round of QLoRA supervised fine-tuning on red-team output cuts ASR to 6.4% (−21.2 pp, *p* < 0.0001, paired bootstrap 95% CI [−23.5, −18.9]). Helpfulness retention goes *up* to 99.6% and false refusals drop to 0.4%, so the model did not just learn to refuse everything.
+- **The negative result I shipped anyway.** Stacking DPO on the SFT checkpoint regressed safety back to 21.5%. DPO's whole premise is correcting over-refusal caused by safety training. When there is no over-refusal to correct, it eats the safety margin instead. I wrote that up rather than quietly dropping the run.
+- **MediCS-500.** 500 expert-curated harmful seeds plus 500 benign twins, code-switched into 6 languages with back-translation verification, so jailbreak susceptibility and over-refusal are measured on the same benchmark.
+- **Evaluation.** 3 checkpoints × 3 seeds × 1,599 held-out attacks, judged by GPT-5 at temperature 0. McNemar with Holm-Bonferroni across languages, Cohen's *h*, residual-failure breakdown, cross-architecture transfer, and a fairness audit that treats language as the protected attribute. 213 tests.`,
     logo: "/icons/medics.svg",
     isExpanded: true,
   },
   {
-    id: "adattt",
-    title: "AdaTTT — Adaptive Test-Time Training for Vision-Language Models",
-    period: { start: "01.2026" },
-    link: "https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training",
+    id: "mnemo",
+    title: "Mnemo: Agent Memory With a Write-Time Quality Gate",
+    period: { start: "06.2026", end: "07.2026" },
     skills: [
-      "PyTorch",
-      "ViT + BERT",
-      "Test-Time Training",
-      "MAE Self-Supervision",
-      "Gradio",
+      "Python",
+      "Postgres + pgvector",
+      "Event Sourcing",
+      "MCP Server",
+      "FastAPI",
+      "Ollama",
     ],
-    description: `An adaptive **test-time training (TTT)** system for Visual Question Answering that adapts the model *per input* — but only when it's worth the compute.
+    description: `Agent memory has two diseases: it stores mostly junk, and it invents false facts out of negations and hypotheticals. Mem0 issue #4573 is the clearest public example, where 97.8% of 10,134 stored entries were noise. Mnemo puts a quality gate on the write path and an append-only, bitemporal Postgres store underneath it.
 
-- **Self-supervised TTT objective.** At inference, the model adapts via a per-token masked patch reconstruction task (MAE-style) over image tokens, requiring no labels while the ViT + BERT encoders stay frozen — only a lightweight head/adapter updates.
-- **Confidence-gated adaptation.** An entropy/confidence gate decides which samples need TTT, skipping easy, high-confidence inputs to keep the decision boundary sharp.
-- **Accuracy–compute Pareto frontier.** A Pareto curve of accuracy vs. FLOPs shows selective adaptation recovers most of full TTT's benefit at a fraction of the cost.
-- **Rigorous evaluation.** Bootstrap confidence intervals provide honest error bars; gradient accumulation and LR warmup stabilize the few-step inner loop.
-- **Cross-task generalization.** Transfer is tested beyond VQA onto Memotion2 meme-sentiment classification, plus a Gradio demo and ablation studies.`,
-    logo: "/icons/adattt.svg",
+- **The gate.** Every turn runs extract, verify, dedup, score, tier, decay. Negations ("I *don't* use MongoDB") and hypotheticals are rejected before they can become memories. Borderline facts get demoted to a session tier rather than guessed at, so recall is never traded for precision.
+- **Measured against a naive baseline, on the same conversation and extractor.** Precision 60% to 90%, F1 75% to 94.7%, false memories 2 to 0, recall held at 100%. The gate is not just storing less; it is storing the right things.
+- **You can run the number yourself.** \`make eval\` uses a deterministic embedder with no model, no network, and no API key, so the headline reproduces on any machine in one command.
+- **Every decision is reversible.** An immutable event log is the source of truth and current state is just a SQL view of HEAD. \`blame\` says which turn introduced a belief and why it scored what it did; \`revert\` rolls a fact back; \`invalidate\` retires it bitemporally; \`diff\` shows how beliefs changed between two points in time. Nothing is ever overwritten.
+- **Principled forgetting.** Ebbinghaus decay (R = e^(−t/S)) fades unused facts, recall reinforces them, and faded facts are archived through an appended event rather than deleted.
+- **Shipped as a product surface.** MCP server with 8 tools, a Python SDK, a web UI for the audit-and-revert flow, and hybrid FTS plus vector retrieval reranked on relevance, recency, and importance. 88 tests, local-first, self-hostable.`,
+    logo: "/icons/mnemo.svg",
     isExpanded: true,
   },
   {
-    id: "llm-reasoning-factuality",
-    title: "LLM Reasoning & Factuality",
-    period: { start: "01.2026" },
-    link: "https://github.com/Yugesh-reddy/LLM-Reasoning-and-Factuality",
+    id: "adattt",
+    title: "AdaTTT: Deciding When a Vision-Language Model Should Adapt",
+    period: { start: "03.2026", end: "07.2026" },
+    link: "https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training",
     skills: [
-      "Python",
-      "RAG",
-      "Self-Consistency",
-      "ReAct",
-      "FAISS / Chroma",
+      "PyTorch",
+      "ViT-B/16 + BERT",
+      "Test-Time Training",
+      "Self-Supervision",
+      "CUDA Profiling",
+      "Gradio",
     ],
-    description: `A reasoning-and-factuality pipeline that combines and benchmarks the leading inference-time techniques for grounded, multi-step reasoning.
+    description: `Test-time training takes a few gradient steps on each test sample before answering. It also runs on the easy samples, where the compute is wasted and the accuracy sometimes gets worse. AdaTTT puts a learned gate in front of it.
 
-- **Self-Consistency decoding.** Samples multiple chain-of-thought traces and aggregates by majority vote to reduce variance from any single greedy decode.
-- **ReAct agent loop.** Interleaves reasoning traces with tool/action steps so the model retrieves and verifies intermediate facts instead of hallucinating them.
-- **Retrieval-Augmented Generation (RAG).** Grounds answers in an external knowledge store via dense embedding retrieval.
-- **Standardized benchmarking.** Evaluated on GSM8K and TruthfulQA, with adversarial robustness testing that measures how reasoning quality degrades under crafted, misleading inputs.`,
-    logo: "/icons/llm-reasoning.svg",
+- **The gate learns the right question.** It is supervised on the correctness *delta* between the base and TTT-adapted forward passes, so it predicts "would adaptation help here?" rather than "is the base model right?". That distinction is what makes it transfer.
+- **Base accuracy at base cost.** On VQA-v2 (214,354 samples), the gate at τ=0.95 holds accuracy at 0.4952 against a 0.4956 base, using 47.3 GFLOPs versus 64.9 for running TTT on everything. It skips 94.5% of samples.
+- **More adaptation is not better.** Running K=3 and K=5 steps on every sample drops accuracy to 0.4666 and 0.4648 while nearly tripling compute. The gate exists because that curve bends the wrong way, which is the result worth reporting.
+- **Transfers without retraining.** The VQA-trained gate moves to Memotion2 meme sentiment at 0.7165 accuracy while skipping half the samples.
+- **Built like a system.** Frozen ViT-B/16 and BERT encoders with TTT touching only the fusion head, 25.9 ms p50 end to end on an H100, precomputed encoder features for 5-10× faster sweeps, 94 tests, 9 figures, bootstrap CIs on every number, and an IEEE-format writeup.
+
+Course project for CS 518 (Deep Learning for Computer Vision, UIC) with Aishwarya Reddy Chinthalapudi and Aryan Shetty.`,
+    logo: "/icons/adattt.svg",
     isExpanded: false,
   },
   {
     id: "melanoma-tissue-volumes",
-    title: "Melanoma Tissue Volumes — Microscopy Analysis Dashboard",
-    period: { start: "09.2025", end: "02.2026" },
+    title: "Melanoma Tissue Volumes: 3D Pathology and a Grounded AI Agent",
+    period: { start: "12.2025", end: "06.2026" },
     link: "https://github.com/Yugesh-reddy/Melanoma-Tissue-Volumes",
     skills: [
-      "React 18",
-      "Three.js",
-      "Vite",
-      "WebGL",
+      "React",
+      "Three.js / WebGL",
+      "GLSL",
+      "D3.js",
+      "LLM Tool Use",
       "CyCIF",
     ],
-    description: `An interactive 3D visualization and analysis dashboard for **cyclic immunofluorescence (CyCIF)** microscopy of biopsy tissue, built for the Visual Data Science graduate course at UIC.
+    description: `A browser application that renders a 70-channel melanoma biopsy as an interactive 3D point cloud, computes a deterministic pathology analysis of any region you draw, and puts an AI assistant on top that can explain the findings and drive the app for you. Built on the BiomedVis Challenge 2025 specimen with Dr. Lei Duan and Dr. Carl Maki of Rush University.
 
-- **GPU-accelerated 3D rendering.** Tissue volumes render in WebGL with full camera control and level-of-detail (LOD) optimization so large multi-channel volumes stay interactive in the browser.
-- **Multi-channel biomarker analysis.** Multiple biomarker channels are visualized and compared simultaneously, with per-channel color, opacity, and threshold controls updating in real time.
-- **Region selection & statistics.** 3D selection boxes isolate arbitrary regions, surfacing cell counts, density, and intensity distributions.
-- **Statistical visualization suite.** Bar charts, co-expression heatmaps, violin plots, and a directional/spatial-orientation view of biomarker layout.`,
+- **The separation that makes it trustworthy.** A deterministic engine produces the numbers: per-marker statistics, 14 candidate cell populations, immune-hot/cold microenvironment classification, checkpoint and exhaustion signals, proliferation index. The LLM is only ever allowed to explain numbers the engine already computed, so it structurally cannot invent a finding. That is the difference between this and a chat wrapper.
+- **Agentic, with an actual safety model.** A catalog of 24 tools lets the assistant toggle channels, draw selections, change views, and compare regions through a bounded plan-act-observe loop, guarded by fenced-block-only execution, schema validation with argument stripping, context-scoped allowlists, human confirmation on destructive actions, full undo, and per-turn tracing.
+- **Millions of voxels at interactive framerates.** GPU instancing renders each channel in one draw call instead of millions, custom GLSL shaders position voxels from instanced buffer attributes, adaptive level-of-detail coarsens sampling with camera distance (roughly 64× fewer instances when zoomed out), and toggling a channel rebuilds only that channel.
+- **Nothing leaves the machine.** No backend, no database, no server-side rendering. Voxel data is served as static files and the model is a local OpenAI-compatible endpoint the browser talks to directly, which matters when the data is patient tissue.
+- **Four coordinated panels**, including a PCA-derived principal-axis view with a coherence metric, plus per-marker distributions in bar, violin, and composition form.
+
+Course project for Visual Data Science at UIC.`,
     logo: "/icons/melanoma.svg",
     isExpanded: false,
   },
   {
+    id: "gambit",
+    title: "Gambit: A Model Router I Killed When the Evidence Did Not Hold",
+    period: { start: "07.2025", end: "08.2026" },
+    link: "https://github.com/Yugesh-reddy/Gambit",
+    skills: [
+      "Python",
+      "FastAPI",
+      "Calibration",
+      "Pre-Registered Evaluation",
+      "Azure AI Foundry",
+      "Docker",
+    ],
+    description: `A three-tier LLM router (local cheap, paid mid, paid frontier) built on the thesis that most queries do not need the best model you can afford. In simulation it looked excellent. On real benchmarks it did not hold, so I shut it down. This entry is the postmortem, not a pitch.
+
+- **What the thesis predicted.** A controlled mock with a tunable error-correlation knob showed the trained controller matching frontier accuracy at a large cost saving. That number was always labeled as simulated, and it is the reason the project ran as long as it did.
+- **What real models showed.** On a 498-query mixed battery (GSM8K, MMLU-Pro, SimpleQA, tokenizer-bound counting), the trained controller reached 0.596 accuracy against a frontier baseline of 0.768. Later policies closed the accuracy gap but missed the cost bar, or hit the cost bar only by under-escalating. No variant ever passed both.
+- **The kill switch, and why I built one first.** Stage 1 was a prompt-only complexity scorer. Its held-out *within-benchmark* AUC on GSM8K came out at 0.523, a coin flip, against a pre-registered ship gate of 0.65. Pooled AUC looked fine at 0.779, which is exactly the trap: it was separating datasets, not hard queries from easy ones. A band router, not a query-adaptive one. I stopped iterating rather than tune until something passed.
+- **The contract came before the result.** \`docs/EVAL_CONTRACT.md\` fixed the model ladder, the accuracy test (one-sided McNemar, not a hand-picked epsilon), a non-inferiority margin of 3pp, and a 25% cost floor, all pre-registered. Every amendment landed before any code change or further paid generation. The README shipped with no headline number because nothing passed the contract.
+- **What I would keep.** The serving tier is real: OpenAI wire protocol with streaming, per-key budget caps returning HTTP 402, \`X-Gambit-*\` decision headers, an offline replay store so any policy can be re-swept for free, fail-closed handling of truncated and empty provider responses, and 320+ tests.
+
+The engineering was sound. The hypothesis was not, and a negative result you can explain is worth more than a positive one you cannot defend.`,
+    logo: "/icons/gambit.svg",
+    isExpanded: false,
+  },
+  {
+    id: "llm-reasoning-factuality",
+    title: "LLM Reasoning & Factuality: What Actually Helps, and Where",
+    period: { start: "09.2025" },
+    link: "https://github.com/Yugesh-reddy/LLM-Reasoning-and-Factuality",
+    skills: [
+      "Python",
+      "Self-Consistency",
+      "ReAct",
+      "RAG",
+      "Ollama",
+      "Streamlit",
+    ],
+    description: `Three inference-time techniques for reasoning and factuality, implemented from scratch and run on the same tasks across local Ollama models and hosted APIs, so the comparison is honest rather than three separate demos.
+
+- **Self-consistency.** Samples multiple chain-of-thought traces and aggregates by majority vote. Worth 15-25% accuracy on local Llama 3.2 and Mistral, but only 2-5% on GPT-4, which is already internally consistent. Cost scales linearly with samples, so it pays off exactly where the model is weak and nowhere else.
+- **ReAct.** A thought-action-observation loop wired to Serper search, Wikipedia, and SymPy. 40-60% better factual accuracy for local models on recent events, 10-15% for GPT-3.5. Tool access is what closes the gap between a small local model and a large hosted one.
+- **RAC (retrieval-augmented correction).** Decomposes a response into atomic claims, retrieves evidence for each, verifies them, and rewrites only the false ones while keeping the rest intact. 30-50% reduction in factual errors, and the only one of the three that helped local and API models alike.
+- **The takeaway.** These are not interchangeable. Self-consistency amplifies weak reasoners, ReAct handles queries needing fresh information, RAC is post-hoc factuality repair. Reaching for the wrong one costs real money and buys nothing.`,
+    logo: "/icons/llm-reasoning.svg",
+    isExpanded: false,
+  },
+  {
     id: "fleet",
-    title: "Fleet — Flutter Road-Trip Planner & Destination Discovery",
+    title: "Fleet: Flutter Road-Trip Planner",
     period: { start: "01.2023", end: "10.2023" },
     link: "https://github.com/Yugesh-reddy/Fleet--Flutter-Travel-App",
     skills: [
@@ -98,11 +156,11 @@ export const PROJECTS: Project[] = [
       "Google Maps API",
       "Google Places API",
     ],
-    description: `A cross-platform **Flutter** road-trip planning app that acts as a digital co-pilot — destination discovery, cost estimation, and personalized recommendations in one interface.
+    description: `A cross-platform road-trip planner from my undergrad years: pick where you are going, find out what the trip actually costs, and see where to stay and eat along the way.
 
-- **Destination discovery & trip cost estimation.** Curated, filterable destination lists plus real-time travel-cost estimates from live distance/route data via the Google Maps API.
-- **Nearby lodging & dining.** Up-to-date hotel and restaurant options for each stop, with ratings and distance, served through the Google Places API.
-- **Cloud backend & realtime sync.** Plans, discoveries, and preferences persist in the cloud with secure auth; recommendations adapt to the user's travel style and history.`,
+- Curated, filterable destinations with live travel-cost estimates computed from real distance and route data through the Google Maps API.
+- Nearby hotels and restaurants for each stop with ratings and distance, via Google Places.
+- Firebase auth and cloud sync so plans persist across devices, with recommendations that shift based on previous trips.`,
     logo: "/icons/fleet.svg",
     isExpanded: false,
   },
