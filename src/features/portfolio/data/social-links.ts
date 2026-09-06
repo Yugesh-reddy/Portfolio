@@ -19,4 +19,10 @@ export const SOCIAL_LINKS: SocialLink[] = [
     subtitle: "Yugeshsapp",
     href: "https://x.com/Yugeshsapp",
   },
+  {
+    icon: "/icons/youtube.svg",
+    title: "YouTube",
+    subtitle: "yugeshreddys9973",
+    href: "https://www.youtube.com/@yugeshreddys9973",
+  },
 ]

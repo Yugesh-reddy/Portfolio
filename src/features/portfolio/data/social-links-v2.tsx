@@ -24,20 +24,19 @@ export const SOCIAL_LINKS: SocialLink[] = [
     href: "https://www.linkedin.com/in/yugesh-reddy-sappidi",
   },
   {
-    name: "discord",
-    icon: <Icons.discord />,
-    title: "Discord",
-    // TODO: replace with your Discord profile/invite URL
-    handle: "",
-    href: "#",
-  },
-  {
     name: "youtube",
     icon: <Icons.youtube />,
     title: "YouTube",
-    // TODO: replace with your YouTube channel URL
-    handle: "",
-    href: "#",
+    handle: "yugeshreddys9973",
+    href: "https://www.youtube.com/@yugeshreddys9973",
+  },
+  {
+    // No `href`: Discord profile links resolve by numeric user ID, not by
+    // username, so the handle is click-to-copy instead of a dead link.
+    name: "discord",
+    icon: <Icons.discord />,
+    title: "Discord",
+    handle: "pain0._.0",
   },
 ]
 
