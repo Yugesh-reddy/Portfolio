@@ -10,6 +10,7 @@ import {
   CornerDownLeftIcon,
   DownloadIcon,
   FileTextIcon,
+  FileUserIcon,
   GraduationCapIcon,
   MonitorIcon,
   MoonStarIcon,
@@ -107,6 +108,12 @@ const PORTFOLIO_LINKS: CommandLinkItem[] = [
     href: "/blog",
     kind: "page",
     icon: <Icons.news />,
+  },
+  {
+    title: "Resume",
+    href: "/resume",
+    kind: "page",
+    icon: <FileUserIcon />,
   },
 ]
 

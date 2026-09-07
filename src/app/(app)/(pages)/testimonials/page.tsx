@@ -33,6 +33,12 @@ const ogImage = `/og/simple?title=${encodeURIComponent(title)}&description=${enc
 export const metadata: Metadata = {
   title,
   description,
+  // Keep this page out of search results while it has no testimonials.
+  // Remove once TESTIMONIALS_1 / TESTIMONIALS_2 have entries.
+  robots: {
+    index: false,
+    follow: false,
+  },
   alternates: {
     canonical: "/testimonials",
   },

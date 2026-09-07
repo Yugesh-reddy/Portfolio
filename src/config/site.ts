@@ -23,6 +23,10 @@ export const MAIN_NAV: NavItem[] = [
     title: "Blog",
     href: "/blog",
   },
+  {
+    title: "Resume",
+    href: "/resume",
+  },
 ]
 
 export const MOBILE_NAV: NavItem[] = [

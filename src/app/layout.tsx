@@ -116,6 +116,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={fontVariables} suppressHydrationWarning>
       <head>
+        {/*
+          This site ships its own dark theme, so the Dark Reader extension has
+          nothing to add. Left enabled it rewrites every SVG `stroke`/`fill`
+          into `--darkreader-inline-*` custom properties before React hydrates,
+          which fights our theme and throws a hydration mismatch on every route.
+          `darkreader-lock` is Dark Reader's documented opt-out.
+        */}
+        <meta name="darkreader-lock" />
+
         <script
           type="text/javascript"
           dangerouslySetInnerHTML={{ __html: darkModeScript }}
