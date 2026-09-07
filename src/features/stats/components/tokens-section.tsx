@@ -202,48 +202,50 @@ export async function TokensSection() {
               </span>
             </p>
           </div>
-          <table className="sr-only">
-            <caption>
-              AI token usage for recorded active days. Dates without available
-              usage are omitted from the chart.
-            </caption>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Tokens</th>
-                <th>Estimated cost</th>
-                <th>Agents</th>
-                <th>Models</th>
-              </tr>
-            </thead>
-            <tbody>
-              {activeSeries.map((point) => (
-                <tr key={point.date}>
-                  <td>
-                    {format(parseISO(point.date.slice(0, 10)), "dd MMM yyyy")}
-                  </td>
-                  <td>{point.tokens}</td>
-                  <td>{USD_FORMATTER.format(point.cost)}</td>
-                  <td>
-                    {point.agents
-                      .map(
-                        (entry) =>
-                          `${entry.name}: ${formatCompactNumber(entry.tokens)} tokens, ${USD_FORMATTER.format(entry.cost)}`
-                      )
-                      .join("; ") || "None"}
-                  </td>
-                  <td>
-                    {point.models
-                      .map(
-                        (entry) =>
-                          `${entry.name}: ${formatCompactNumber(entry.tokens)} tokens, ${USD_FORMATTER.format(entry.cost)}`
-                      )
-                      .join("; ") || "None"}
-                  </td>
+          <div className="sr-only">
+            <table>
+              <caption>
+                AI token usage for recorded active days. Dates without available
+                usage are omitted from the chart.
+              </caption>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Tokens</th>
+                  <th>Estimated cost</th>
+                  <th>Agents</th>
+                  <th>Models</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {activeSeries.map((point) => (
+                  <tr key={point.date}>
+                    <td>
+                      {format(parseISO(point.date.slice(0, 10)), "dd MMM yyyy")}
+                    </td>
+                    <td>{point.tokens}</td>
+                    <td>{USD_FORMATTER.format(point.cost)}</td>
+                    <td>
+                      {point.agents
+                        .map(
+                          (entry) =>
+                            `${entry.name}: ${formatCompactNumber(entry.tokens)} tokens, ${USD_FORMATTER.format(entry.cost)}`
+                        )
+                        .join("; ") || "None"}
+                    </td>
+                    <td>
+                      {point.models
+                        .map(
+                          (entry) =>
+                            `${entry.name}: ${formatCompactNumber(entry.tokens)} tokens, ${USD_FORMATTER.format(entry.cost)}`
+                        )
+                        .join("; ") || "None"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <Alert>

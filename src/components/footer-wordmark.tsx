@@ -1,6 +1,6 @@
 "use client"
 
-import { useId, useRef } from "react"
+import { useId } from "react"
 import { motion, useReducedMotion, useSpring } from "motion/react"
 
 import {
@@ -9,51 +9,38 @@ import {
 } from "@/features/portfolio/data/footer-wordmark"
 
 import styles from "./site-footer.module.css"
-import { INK_RESIDUE_SAMPLES, useInkResidue } from "./use-ink-residue"
 
 export function FooterWordmark() {
   const id = useId()
-  const svgRef = useRef<SVGSVGElement>(null)
   const reduceMotion = useReducedMotion()
-  const maskId = `footer-ink-${id}`
-  const residueMaskId = `footer-ink-residue-${id}`
-  const inkShapeId = `footer-ink-shape-${id}`
-  const filterId = `footer-ink-edge-${id}`
+  const gradientId = `footer-gradient-${id}`
+  const clipId = `footer-clip-${id}`
   const letterId = `footer-lettering-${id}`
-  const x = useSpring(1000, { stiffness: 170, damping: 28, mass: 0.3 })
-  const y = useSpring(220, { stiffness: 170, damping: 28, mass: 0.3 })
-  const radius = useSpring(0, { stiffness: 100, damping: 24, mass: 0.5 })
-  const residueRef = useInkResidue(x, y, radius)
+  // Chanh Dai's footer gradient: the top endpoint follows the pointer while
+  // the bottom stays centered, sweeping the fill toward the opposite side.
+  const gradientX = useSpring(1000, { stiffness: 150, damping: 25 })
 
-  function moveInk(event: React.PointerEvent<SVGSVGElement>) {
+  function moveGradient(event: React.PointerEvent<HTMLDivElement>) {
     if (reduceMotion || event.pointerType !== "mouse") return
-    const matrix = svgRef.current?.getScreenCTM()
-    if (!matrix) return
-    const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(
-      matrix.inverse()
+    const bounds = event.currentTarget.getBoundingClientRect()
+    if (!bounds.width) return
+    gradientX.set(
+      Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)) *
+        2000
     )
-
-    if (event.type === "pointerenter") {
-      x.jump(point.x)
-      y.jump(point.y)
-    } else {
-      x.set(point.x)
-      y.set(point.y)
-    }
-    radius.set(235)
   }
 
   return (
-    <div className={styles.wordmark}>
+    <div
+      className={styles.wordmark}
+      onPointerMove={moveGradient}
+      onPointerLeave={() => gradientX.set(1000)}
+    >
       <svg
-        ref={svgRef}
         className={styles.wordmarkSvg}
         viewBox={FOOTER_WORDMARK_VIEWBOX}
         role="img"
         aria-label="YUGESH, architectural outline lettering"
-        onPointerEnter={moveInk}
-        onPointerMove={moveInk}
-        onPointerLeave={() => radius.set(0)}
       >
         <defs>
           <g id={letterId}>
@@ -66,73 +53,30 @@ export function FooterWordmark() {
               />
             ))}
           </g>
-          <filter
-            id={filterId}
-            x="-30%"
-            y="-30%"
-            width="160%"
-            height="160%"
-            colorInterpolationFilters="sRGB"
+          <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
+            {footerLetters.map(({ letter, x: offset, outline }) => (
+              <path
+                key={letter}
+                transform={`translate(${offset} 77)`}
+                d={outline}
+              />
+            ))}
+          </clipPath>
+          <motion.linearGradient
+            id={gradientId}
+            x1={reduceMotion ? 1000 : gradientX}
+            y1="77"
+            x2="1000"
+            y2="363"
+            gradientUnits="userSpaceOnUse"
           >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.028 0.04"
-              numOctaves="3"
-              seed="5"
-              result="noise"
+            <stop
+              offset="0.625"
+              stopColor="var(--foreground)"
+              stopOpacity="0"
             />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale="58"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-            <feGaussianBlur stdDeviation="0.55" />
-            <feComponentTransfer>
-              <feFuncA type="linear" slope="5" intercept="-2.15" />
-            </feComponentTransfer>
-          </filter>
-          <motion.circle
-            id={inkShapeId}
-            cx={x}
-            cy={y}
-            r={reduceMotion ? 0 : radius}
-            filter={`url(#${filterId})`}
-          />
-          <mask
-            id={residueMaskId}
-            maskUnits="userSpaceOnUse"
-            x="0"
-            y="0"
-            width="2000"
-            height="440"
-          >
-            <g
-              ref={residueRef}
-              fill="none"
-              stroke="white"
-              strokeWidth="16"
-              filter={`url(#${filterId})`}
-            >
-              {Array.from({ length: INK_RESIDUE_SAMPLES }, (_, index) => (
-                <circle key={index} r="0" opacity="0" />
-              ))}
-            </g>
-            {/* Remove the current ink footprint: only its recently vacated
-                edge can leave a gray membrane. */}
-            <use href={`#${inkShapeId}`} fill="black" />
-          </mask>
-          <mask
-            id={maskId}
-            maskUnits="userSpaceOnUse"
-            x="0"
-            y="0"
-            width="2000"
-            height="440"
-          >
-            <use href={`#${inkShapeId}`} fill="white" />
-          </mask>
+            <stop offset="1" stopColor="var(--foreground)" />
+          </motion.linearGradient>
         </defs>
 
         <use href={`#${letterId}`} className={styles.letterOutlines} />
@@ -150,12 +94,17 @@ export function FooterWordmark() {
             </g>
           ))}
         </g>
-        <g mask={`url(#${residueMaskId})`} className={styles.inkResidue}>
-          <use href={`#${letterId}`} />
-        </g>
-        <g mask={`url(#${maskId})`} className={styles.ink}>
-          <use href={`#${letterId}`} />
-        </g>
+        {/* Paint in the wordmark's coordinate space. Filling the translated
+            letter paths directly would restart the gradient for each letter. */}
+        <rect
+          x="0"
+          y="24"
+          width="2000"
+          height="392"
+          clipPath={`url(#${clipId})`}
+          fill={`url(#${gradientId})`}
+          pointerEvents="none"
+        />
       </svg>
     </div>
   )
