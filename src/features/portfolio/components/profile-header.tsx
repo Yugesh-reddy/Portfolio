@@ -34,6 +34,15 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
     USER.displayName,
     USER.firstName
   )
+  const middleName =
+    remainder && remainder !== USER.lastName && remainder.endsWith(USER.lastName)
+      ? remainder.slice(0, -USER.lastName.length).trim()
+      : ""
+  const lastName = remainder
+    ? middleName
+      ? USER.lastName
+      : remainder
+    : ""
   const detailsVisible = intro?.detailsVisible ?? true
   const morphTargetsVisible = intro?.morphTargetsVisible ?? true
   const detailStyle: CSSProperties | undefined = intro
@@ -95,7 +104,7 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
               )}
             >
               <AvatarLights
-                className="ring-[#fbbf24] ring-offset-2 ring-offset-background group-focus-visible/avatar-lights-toggle:ring-2 dark:ring-[#FFC799]"
+                className="size-28 ring-[#fbbf24] ring-offset-2 ring-offset-background group-focus-visible/avatar-lights-toggle:ring-2 min-[24rem]:size-28 min-[420px]:size-30 min-[540px]:size-32 sm:size-40 dark:ring-[#FFC799]"
                 variants={USER.avatarVariants}
               />
             </div>
@@ -103,10 +112,17 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
         </div>
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex min-w-0 flex-col">
         <div className="mt-auto border-t border-line">
-          <div className="flex items-center gap-2 pl-4">
-            <h1 className={cn("relative -top-px", PROFILE_NAME_CLASS)}>
+          <div className="flex min-w-0 items-end gap-2 pl-4 pr-2 min-[375px]:items-center">
+            <h1
+              aria-label={USER.displayName}
+              className={cn(
+                "relative -top-px min-w-0 min-[375px]:whitespace-nowrap",
+                PROFILE_NAME_CLASS,
+                "text-[1.5rem] leading-tight min-[375px]:leading-none min-[420px]:text-[1.625rem] min-[540px]:text-[1.75rem] sm:text-[2rem]"
+              )}
+            >
               <span
                 ref={intro?.nameTargetRef}
                 className={cn(
@@ -117,7 +133,7 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
               >
                 {first}
               </span>
-              {remainder ? (
+              {lastName ? (
                 <>
                   {" "}
                   <span
@@ -131,7 +147,12 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
                     )}
                     style={detailStyle}
                   >
-                    {remainder}
+                    {middleName ? (
+                      <span className="hidden min-[540px]:inline" aria-hidden>
+                        {middleName}{" "}
+                      </span>
+                    ) : null}
+                    {lastName}
                   </span>
                 </>
               ) : null}
@@ -139,7 +160,7 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
 
             <div
               className={cn(
-                "flex transform-gpu items-center gap-2",
+                "flex shrink-0 transform-gpu items-center gap-2",
                 intro &&
                   "transition-[opacity,transform] motion-reduce:transition-none",
                 detailsVisible
