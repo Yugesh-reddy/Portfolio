@@ -3,6 +3,7 @@ import { addQueryParams } from "@/utils/url"
 import { BoxIcon, InfinityIcon, LinkIcon } from "lucide-react"
 
 import { UTM_PARAMS } from "@/config/site"
+import { cn } from "@/lib/utils"
 import { Tag } from "@/components/ui/tag"
 import { Prose } from "@/components/ui/typography"
 import {
@@ -41,7 +42,10 @@ export function ProjectItem({
             width={32}
             height={32}
             quality={100}
-            className="mx-4 flex size-8 shrink-0 select-none dark:invert"
+            className={cn(
+              "mx-4 flex size-8 shrink-0 select-none dark:invert",
+              project.id === "mnemo" && "scale-125"
+            )}
             unoptimized
             aria-hidden
           />
