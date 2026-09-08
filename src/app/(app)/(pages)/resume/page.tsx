@@ -9,6 +9,7 @@ import {
   PageHeadingTagline,
   PageHeadingTitle,
 } from "@/components/page-heading"
+import { PdfViewer } from "@/components/pdf-viewer"
 import { DocShareMenu } from "@/features/doc/components/doc-share-menu"
 import { USER } from "@/features/portfolio/data/user"
 
@@ -80,28 +81,15 @@ export default function ResumePage() {
       </div>
 
       <div className="p-2">
-        {/*
-          Rendered only on sm and up. Mobile browsers (iOS Safari in particular)
-          routinely refuse to paint an inline PDF and leave a blank frame with no
-          way to recover, so small screens get the explicit card below instead.
-        */}
-        <object
-          className="aspect-[8.5/11] w-full rounded-lg border border-line bg-muted max-sm:hidden"
-          data={`${RESUME_FILE}#toolbar=0&navpanes=0&view=FitH`}
-          type="application/pdf"
-          aria-label={`${USER.displayName} resume, PDF preview`}
-        >
-          <ResumeFallback>
-            This browser cannot display PDFs inline.
-          </ResumeFallback>
-        </object>
-
-        <div className="sm:hidden">
-          <ResumeFallback>
-            The inline preview needs a wider screen. Open the PDF in a new tab
-            or download it.
-          </ResumeFallback>
-        </div>
+        <PdfViewer
+          file={RESUME_FILE}
+          fallback={
+            <ResumeFallback>
+              Unable to load the preview. Open the PDF in a new tab or download
+              it.
+            </ResumeFallback>
+          }
+        />
       </div>
 
       <div className="h-4" />

@@ -66,9 +66,14 @@ export function GitHubContributionGraph({
       <ContributionGraphFooter className="gap-4 px-4 leading-none">
         <ContributionGraphTotalCount>
           {({ totalCount }) => (
-            <div className="text-muted-foreground">
-              {totalCount.toLocaleString("en")} contributions in the past 365
-              days.
+            <div className="flex min-w-0 items-baseline gap-3 text-muted-foreground">
+              <span className="pointer-events-none shrink-0 font-mono text-xs leading-none text-zinc-400 select-none dark:text-zinc-700">
+                FIG_002
+              </span>
+              <span className="whitespace-normal">
+                {totalCount.toLocaleString("en")} contributions in the past 365
+                days.
+              </span>
             </div>
           )}
         </ContributionGraphTotalCount>
