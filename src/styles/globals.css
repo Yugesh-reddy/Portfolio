@@ -333,6 +333,30 @@
   }
 }
 
+/* Equalizer bars used by the Listening tile — same conventions as shimmer. */
+@theme inline {
+  @keyframes tw-eq {
+    0%,
+    100% {
+      transform: scaleY(0.3);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+}
+
+@utility eq {
+  transform-origin: bottom;
+  animation: tw-eq 0.9s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eq {
+    animation: none;
+  }
+}
+
 :root {
   /* white */
   --background: oklch(1 0 0);

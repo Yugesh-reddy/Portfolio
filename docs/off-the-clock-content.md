@@ -1,0 +1,24 @@
+# Updating After hours
+
+The four tiles share one shelf language — a numbered mono strip (`01`–`04`, TechStack style), a dashed rule, then a bespoke body — arranged as a bento grid. Desktop uses six columns (Listening 4 + Moving 2 on the first row, Watching 2 + Around Chicago 4 on the second); mobile stacks to one column. The header uses the shared `PanelTitle` with a `[04]` count and an “A little of life outside the editor.” handwritten note. A hatch separator sits between the tiles and the “About this site” row, matching every other section break. Technical credits live in the collapsed “About this site” row. The bottom YS and social strip remains separate.
+
+## Watching and Around Chicago
+
+Edit `src/features/off-clock/data/interests.ts`. Each tile accepts an optional `feature` with:
+
+- `title`: a real current movie/anime, or a place you explored.
+- `note`: one short personal observation, ideally under 55 characters.
+- `image`: optional local public image path beginning with `/`.
+- `imageAlt`: meaningful description of the photo or artwork.
+- `href`: optional HTTPS destination for the feature.
+
+Leave `feature: null` to keep the general descriptions based on your stated interests. No titles or visits were invented. Artwork is contained within its reserved visual area. Long titles are truncated visually and remain available in the title attribute/accessibility text. Caption space supports two lines.
+
+For Chicago, one of your own photos with a place name and one sentence is a natural first addition. It needs no Instagram iframe or external account connection. Use images you have permission to display.
+
+## Live tiles
+
+- Listening: follow [Spotify setup](spotify-setup.md). An active song shows its cover, artist and Spotify link. Paused, private or absent playback does not claim a current song.
+- Moving: follow [Apple Watch setup](activity-setup.md). Missing data shows neutral tracks. Real summaries show three ring colors and a sync timestamp, with stale data explicitly labeled.
+
+Both live tiles stop polling while outside the viewport or while the tab is hidden. No account is required to render this section.
