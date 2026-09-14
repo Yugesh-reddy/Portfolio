@@ -1,12 +1,9 @@
 import { CountUp } from "@/components/motion/count-up"
-import { SeparatorHatch as Separator } from "@/components/separator-hatch"
 import { ActivityTile } from "@/features/activity/components/activity-tile"
 import {
   ChicagoTile,
   WatchingTile,
 } from "@/features/off-clock/components/editorial-tiles"
-import { FooterSocials } from "@/features/off-clock/components/footer-socials"
-import { SiteCredits } from "@/features/off-clock/components/site-credits"
 import { SpotifyNowPlaying } from "@/features/spotify/components/now-playing"
 
 import { HandwrittenArrow, HandwrittenNote } from "./handwritten-note"
@@ -38,9 +35,6 @@ export function ProfileSummary() {
         <WatchingTile className="sm:col-span-2" />
         <ChicagoTile className="sm:col-span-4" />
       </div>
-      <Separator className="screen-line-top screen-line-bottom border-x-0" />
-      <SiteCredits />
-      <FooterSocials />
     </Panel>
   )
 }

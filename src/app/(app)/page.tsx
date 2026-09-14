@@ -4,6 +4,7 @@ import type { ProfilePage as PageSchema, WithContext } from "schema-dts"
 import { Reveal } from "@/components/motion/reveal"
 import { SeparatorHatch as Separator } from "@/components/separator-hatch"
 import { About } from "@/features/portfolio/components/about"
+import { AboutThisSite } from "@/features/portfolio/components/about-this-site"
 import { Blog } from "@/features/portfolio/components/blog"
 import { Bookmarks } from "@/features/portfolio/components/bookmarks"
 import { Certifications } from "@/features/portfolio/components/certifications"
@@ -93,6 +94,7 @@ export default function HomePage() {
         </Reveal>
         <Separator className="screen-line-bottom" />
         <ProfileSummary />
+        <AboutThisSite />
       </div>
     </>
   )
