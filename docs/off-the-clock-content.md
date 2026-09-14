@@ -7,12 +7,14 @@ The four tiles share one shelf language — a numbered mono strip (`01`–`04`, 
 Edit `src/features/off-clock/data/interests.ts`. Each tile accepts an optional `feature` with:
 
 - `title`: a real current movie/anime, or a place you explored.
-- `note`: one short personal observation, ideally under 55 characters.
+- `note`: optional short personal observation, ideally under 55 characters.
 - `image`: optional local public image path beginning with `/`.
 - `imageAlt`: meaningful description of the photo or artwork.
 - `href`: optional HTTPS destination for the feature.
 
-Leave `feature: null` to keep the general descriptions based on your stated interests. No titles or visits were invented. Artwork is contained within its reserved visual area. Long titles are truncated visually and remain available in the title attribute/accessibility text. Caption space supports two lines.
+Leave `feature: null` to keep the general descriptions based on your stated interests. Artwork is contained within its reserved visual area. Watching titles wrap so the full title remains readable; caption space supports two lines. The watching card is labeled “Recently watched,” with “Admit one” on the header's dashed divider above the poster. The title is followed by “Season 3,” with no repeated recent-watch caption.
+
+The current recent watch is **House of the Dragon, Season 3**, selected by Yugesh. Its ensemble poster without HBO Max branding is stored locally at `public/images/watching/house-of-the-dragon-season-3-ensemble.webp`, optimized from the [Season 3 artwork on TheTVDB](https://thetvdb.com/series/house-of-the-dragon/seasons/official/3) ([source image](https://artworks.thetvdb.com/banners/v4/season/2247337/posters/6a390708c849a.jpg), artwork © HBO). The portrait is monochrome by default in both themes, reveals its original color on pointer hover or keyboard focus, and respects reduced motion. The card links to HBO's series page. To change the recent watch, update the feature and replace the local artwork.
 
 For Chicago, one of your own photos with a place name and one sentence is a natural first addition. It needs no Instagram iframe or external account connection. Use images you have permission to display.
 
