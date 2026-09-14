@@ -10,6 +10,7 @@ type ShelfCardProps = {
   href?: string
   live?: boolean
   linkLabel?: string
+  dividerBadge?: ReactNode
   bodyClassName?: string
   className?: string
   children: ReactNode
@@ -21,6 +22,7 @@ export function ShelfCard({
   href,
   live = false,
   linkLabel,
+  dividerBadge,
   bodyClassName,
   className,
   children,
@@ -55,10 +57,14 @@ export function ShelfCard({
           ) : null}
         </span>
       </div>
-      <div
-        aria-hidden
-        className="mx-4 mt-3 border-t border-dashed border-line"
-      />
+      <div className={cn("relative mx-4 mt-3", dividerBadge && "mt-4")}>
+        <div aria-hidden className="border-t border-dashed border-line" />
+        {dividerBadge ? (
+          <div className="absolute top-0 left-0 -translate-y-1/2">
+            {dividerBadge}
+          </div>
+        ) : null}
+      </div>
     </>
   )
 
