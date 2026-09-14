@@ -63,7 +63,7 @@ export function ChicagoTile({ className }: { className?: string }) {
             />
           </span>
         ) : (
-          <span className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line text-muted-foreground select-none">
+          <span className="flex min-h-36 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-line text-muted-foreground select-none">
             <ShelfBadge>
               <MapPinned />
             </ShelfBadge>

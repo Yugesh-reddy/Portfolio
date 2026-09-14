@@ -2,21 +2,14 @@ import { z } from "zod"
 
 export type NowPlaying =
   | { status: "unconfigured" | "idle" | "unavailable" }
-  | {
+  | (TrackFields & {
       status: "playing"
-      title: string
-      artist: string
-      url: string
-      artwork?: string
-    }
-  | {
+      progressMs?: number
+    })
+  | (TrackFields & {
       status: "recent"
-      title: string
-      artist: string
-      url: string
-      artwork?: string
       playedAt?: string
-    }
+    })
 
 type Credentials = {
   clientId?: string
@@ -26,6 +19,7 @@ type Credentials = {
 
 const trackSchema = z.object({
   name: z.string().min(1),
+  duration_ms: z.number().int().positive().optional(),
   artists: z.array(z.object({ name: z.string().min(1) })).min(1),
   external_urls: z.object({
     spotify: z
@@ -34,8 +28,10 @@ const trackSchema = z.object({
       .refine((url) => new URL(url).origin === "https://open.spotify.com"),
   }),
   album: z.object({
+    name: z.string().optional(),
     images: z.array(
       z.object({
+        width: z.number().positive().nullish(),
         url: z
           .string()
           .url()
@@ -87,6 +83,7 @@ export async function getNowPlaying(
     const playback = z
       .object({
         is_playing: z.boolean(),
+        progress_ms: z.number().int().nonnegative().nullish(),
         currently_playing_type: z.string(),
         item: z.unknown(),
         device: z
@@ -102,6 +99,9 @@ export async function getNowPlaying(
       return remember({
         status: "playing",
         ...fieldsOf(track),
+        ...(playback.progress_ms != null && track.duration_ms
+          ? { progressMs: Math.min(playback.progress_ms, track.duration_ms) }
+          : {}),
       })
     }
     if (!playback.is_playing && !isPrivate && isTrack) {
@@ -127,14 +127,24 @@ type TrackFields = {
   artist: string
   url: string
   artwork?: string
+  album?: string
+  durationMs?: number
 }
 
 function fieldsOf(track: Track): TrackFields {
+  // Enough detail for the larger cover, without loading the largest image.
+  const artwork =
+    [...track.album.images]
+      .filter((image) => image.width && image.width >= 256)
+      .sort((a, b) => a.width! - b.width!)
+      .at(0) || track.album.images.at(0)
   return {
     title: track.name,
     artist: track.artists.map(({ name }) => name).join(", "),
     url: track.external_urls.spotify,
-    artwork: track.album.images.at(-1)?.url,
+    artwork: artwork?.url,
+    ...(track.album.name ? { album: track.album.name } : {}),
+    ...(track.duration_ms ? { durationMs: track.duration_ms } : {}),
   }
 }
 
@@ -152,6 +162,8 @@ function remember<T extends TrackFields & { status: "playing" }>(track: T): T {
     artist: track.artist,
     url: track.url,
     artwork: track.artwork,
+    ...(track.album ? { album: track.album } : {}),
+    ...(track.durationMs ? { durationMs: track.durationMs } : {}),
     seenAt: new Date().toISOString(),
   }
   return track

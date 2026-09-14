@@ -1,5 +1,3 @@
-import { ChevronDown } from "lucide-react"
-
 import { SOURCE_CODE_GITHUB_URL } from "@/config/site"
 import { Icons } from "@/components/icons"
 
@@ -25,12 +23,8 @@ const linkClassName =
 
 export function SiteCredits() {
   return (
-    <details className="group">
-      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between px-4 font-mono text-xs text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring [&::-webkit-details-marker]:hidden">
-        About this site
-        <ChevronDown aria-hidden className="size-3.5 group-open:rotate-180" />
-      </summary>
-      <div className="grid grid-cols-2 gap-px border-y border-line bg-line md:grid-cols-3">
+    <div>
+      <div className="grid grid-cols-2 gap-px border-b border-line bg-line md:grid-cols-3">
         <dl className="min-w-0 bg-background p-4">
           <dt className={labelClassName}>Deployed on</dt>
           <dd className="mt-2 font-mono text-sm">
@@ -109,6 +103,6 @@ export function SiteCredits() {
           ))}
         </ol>
       </div>
-    </details>
+    </div>
   )
 }

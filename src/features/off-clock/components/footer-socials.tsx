@@ -16,8 +16,11 @@ const socials = [
 export function FooterSocials() {
   return (
     <>
-      <div aria-hidden className="h-4 border-b border-line" />
-      <div className="flex h-12 items-center justify-between border-b border-line px-4 text-muted-foreground">
+      <div
+        aria-hidden
+        className="screen-line-bottom h-4 border-b border-line"
+      />
+      <div className="screen-line-bottom flex h-12 items-center justify-between border-b border-line px-4 text-muted-foreground">
         <Link
           href="/#top"
           aria-label="Yugesh Sappidi, back to top"

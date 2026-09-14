@@ -9,6 +9,8 @@ type ShelfCardProps = {
   label: string
   href?: string
   live?: boolean
+  linkLabel?: string
+  bodyClassName?: string
   className?: string
   children: ReactNode
 }
@@ -18,6 +20,8 @@ export function ShelfCard({
   label,
   href,
   live = false,
+  linkLabel,
+  bodyClassName,
   className,
   children,
 }: ShelfCardProps) {
@@ -36,8 +40,8 @@ export function ShelfCard({
         <span className="ml-auto flex shrink-0 items-center">
           {live ? (
             <span className="relative flex size-2" aria-label="Live">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex size-full rounded-full bg-foreground opacity-40 motion-safe:animate-ping" />
+              <span className="relative inline-flex size-2 rounded-full bg-foreground" />
             </span>
           ) : null}
           {href ? (
@@ -58,7 +62,11 @@ export function ShelfCard({
     </>
   )
 
-  const body = <div className="flex flex-1 flex-col p-4">{children}</div>
+  const body = (
+    <div className={cn("flex flex-1 flex-col p-4", bodyClassName)}>
+      {children}
+    </div>
+  )
 
   if (href) {
     return (
@@ -71,7 +79,7 @@ export function ShelfCard({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label={`${label} (opens in a new tab)`}
+        aria-label={`${linkLabel || label} (opens in a new tab)`}
       >
         {header}
         {body}

@@ -2,6 +2,17 @@
 
 The website receiver and tile are implemented. A real iPhone sync and hosted Redis database still need to be connected. The browser cannot read Apple Health directly.
 
+The connection follows this path: **Apple Watch → Apple Health on iPhone → Scripting → `/api/activity` → Redis → the website rings**. The website reads the last uploaded snapshot once a minute while the tile is visible. This is periodic sync, not a continuous Watch stream.
+
+The redesigned tile uses three grayscale rings and matching Move, Exercise and Stand labels. Without a snapshot, it shows empty ring tracks and dashes rather than invented completion percentages. A connected snapshot fills the rings and displays its percentages and Chicago sync time; an old snapshot is labeled “Last activity.”
+
+To finish connecting the existing implementation:
+
+1. Add the three server environment values below to the website and local environment.
+2. Deploy to your canonical HTTPS domain, then confirm `/api/activity` returns `empty`.
+3. Run the included iPhone sender once and approve Health access on the phone.
+4. Confirm the visible percentages match Fitness, then optionally add a Shortcuts automation.
+
 ## What appears publicly
 
 Only Move, Exercise and Stand **percentages**, the activity date and a sync timestamp. The sender uploads the three totals and goals to your own endpoint; the server converts them before storage. Weight, heart rate, steps, routes and device identifiers are not requested or accepted. One snapshot is retained, expiring seven days after the last accepted upload.

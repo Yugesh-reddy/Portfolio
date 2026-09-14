@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils"
 type Progress = { move: number; exercise: number; stand: number }
 
 const rings = [
-  { key: "move", name: "Move", radius: 42, color: "#fa375e" },
-  { key: "exercise", name: "Exercise", radius: 30, color: "#a3e635" },
-  { key: "stand", name: "Stand", radius: 18, color: "#22d3ee" },
+  { key: "move", name: "Move", radius: 43, opacity: 1 },
+  { key: "exercise", name: "Exercise", radius: 31, opacity: 0.65 },
+  { key: "stand", name: "Stand", radius: 19, opacity: 0.4 },
 ] as const
 
 export function ActivityRings({
@@ -19,30 +19,31 @@ export function ActivityRings({
     ? rings
         .map(({ key, name }) => `${name}: ${progress[key]}% of goal`)
         .join(", ")
-    : "Activity rings — no activity data connected"
+    : "Activity rings: no activity data connected"
   return (
     <svg
       viewBox="0 0 100 100"
       role="img"
       aria-label={label}
-      className={cn("size-8", className)}
+      className={cn("size-8 text-foreground", className)}
     >
       <title>{label}</title>
-      {rings.map(({ key, radius, color }) => (
-        <g key={key} fill="none" strokeWidth="10">
+      {rings.map(({ key, radius, opacity }) => (
+        <g key={key} fill="none" stroke="currentColor" strokeWidth="7">
           <circle
             cx="50"
             cy="50"
             r={radius}
-            stroke={color}
-            opacity={progress ? 0.18 : 0.28}
+            opacity={progress ? 0.1 : opacity * 0.2}
+            strokeDasharray={progress ? undefined : "1 3"}
+            strokeLinecap="round"
           />
           {progress && progress[key] > 0 && (
             <circle
               cx="50"
               cy="50"
               r={radius}
-              stroke={color}
+              opacity={opacity}
               pathLength="100"
               strokeDasharray={`${Math.min(100, Math.max(0, progress[key]))} 100`}
               strokeLinecap="round"

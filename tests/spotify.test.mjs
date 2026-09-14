@@ -83,6 +83,57 @@ test("a paused track shows as last played even before history records it", async
   assert.equal(result.url, "https://open.spotify.com/track/paused")
 })
 
+test("the listening widget receives album details, larger artwork and real progress", async () => {
+  const result = await query({
+    playback: Response.json({
+      ...track,
+      progress_ms: 42_000,
+      item: {
+        ...track.item,
+        duration_ms: 180_000,
+        album: {
+          name: "Test album",
+          images: [
+            { url: "https://i.scdn.co/image/large", width: 640 },
+            { url: "https://i.scdn.co/image/medium", width: 300 },
+            { url: "https://i.scdn.co/image/small", width: 64 },
+          ],
+        },
+      },
+    }),
+  })
+  assert.equal(result.album, "Test album")
+  assert.equal(result.artwork, "https://i.scdn.co/image/medium")
+  assert.equal(result.durationMs, 180_000)
+  assert.equal(result.progressMs, 42_000)
+})
+
+test("missing progress is omitted, and paused tracks never claim live progress", async () => {
+  for (const is_playing of [true, false]) {
+    const result = await query({
+      playback: Response.json({
+        ...track,
+        is_playing,
+        progress_ms: is_playing ? null : 42_000,
+        item: { ...track.item, duration_ms: 180_000 },
+      }),
+    })
+    assert.equal(result.durationMs, 180_000)
+    assert.equal("progressMs" in result, false)
+  }
+})
+
+test("playback position is clamped to the actual track duration", async () => {
+  const result = await query({
+    playback: Response.json({
+      ...track,
+      progress_ms: 200_000,
+      item: { ...track.item, duration_ms: 180_000 },
+    }),
+  })
+  assert.equal(result.progressMs, 180_000)
+})
+
 test("private sessions fall back to history without remembering the track", async () => {
   const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
   __resetSpotifyMemory()

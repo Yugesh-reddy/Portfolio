@@ -33,8 +33,8 @@ export function ProfileSummary() {
       </HandwrittenNote>
 
       <div className="grid grid-cols-1 gap-px bg-line sm:grid-cols-6">
-        <SpotifyNowPlaying className="sm:col-span-4" />
-        <ActivityTile className="sm:col-span-2" />
+        <SpotifyNowPlaying className="sm:col-span-3 md:col-span-4" />
+        <ActivityTile className="sm:col-span-3 md:col-span-2" />
         <WatchingTile className="sm:col-span-2" />
         <ChicagoTile className="sm:col-span-4" />
       </div>
