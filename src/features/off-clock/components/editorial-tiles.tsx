@@ -5,38 +5,56 @@ import { Tag } from "@/components/ui/tag"
 
 import { INTERESTS } from "../data/interests"
 import { ShelfBadge, ShelfCard } from "./personal-tile"
+import styles from "./watching-tile.module.css"
 
 export function WatchingTile({ className }: { className?: string }) {
   const feature = INTERESTS.watching.feature
   return (
     <ShelfCard
       index="03"
-      label="Watching"
+      label="Recently watched"
       href={feature?.href}
+      linkLabel={
+        feature
+          ? [feature.title, feature.note].filter(Boolean).join(" · ")
+          : undefined
+      }
+      dividerBadge={<Tag>Admit one</Tag>}
+      bodyClassName="pt-5"
       className={className}
     >
+      {feature?.image ? (
+        <div className="relative mb-3 w-full max-w-44 self-center overflow-hidden rounded-lg bg-muted inset-ring-1 inset-ring-black/10 select-none dark:inset-ring-white/10">
+          <Image
+            src={feature.image}
+            alt={feature.imageAlt || feature.title}
+            width={528}
+            height={776}
+            sizes="176px"
+            className={`${styles.poster} block h-auto w-full`}
+          />
+        </div>
+      ) : null}
+
       <div className="flex items-center gap-2.5">
-        <ShelfBadge>
-          <Clapperboard />
-        </ShelfBadge>
+        {!feature?.image ? (
+          <ShelfBadge>
+            <Clapperboard />
+          </ShelfBadge>
+        ) : null}
         <div className="min-w-0">
           <p
-            className="truncate leading-snug font-medium text-balance"
+            className="leading-snug font-medium text-balance"
             title={feature?.title || "Movies & anime"}
           >
             {feature?.title || "Movies & anime"}
           </p>
-          <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
-            {feature?.note || "Always up for a good story."}
-          </p>
+          {feature?.note || !feature ? (
+            <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+              {feature?.note || "Always up for a good story."}
+            </p>
+          ) : null}
         </div>
-      </div>
-
-      <div className="relative mt-4 mb-1">
-        <div aria-hidden className="border-t border-dashed border-line" />
-        <Tag className="absolute top-0 left-0 -translate-y-1/2 bg-background">
-          Admit one
-        </Tag>
       </div>
     </ShelfCard>
   )

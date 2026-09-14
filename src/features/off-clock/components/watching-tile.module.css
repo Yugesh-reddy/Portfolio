@@ -1,0 +1,21 @@
+.poster {
+  filter: grayscale(1);
+  transition: filter 240ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(.group):hover .poster {
+    filter: grayscale(0);
+  }
+}
+
+:global(.group):focus-visible .poster {
+  filter: grayscale(0);
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poster {
+    transition: none;
+  }
+}
