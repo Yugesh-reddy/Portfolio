@@ -125,13 +125,13 @@ export function ShelfBadge({
   )
 }
 
-/** Artwork thumb with the post-image ring treatment. */
+/** Artwork thumb with the post-image ring drawn above the image. */
 export function ShelfArt({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "relative size-14 shrink-0 overflow-hidden rounded-md bg-muted text-muted-foreground inset-ring-1 inset-ring-black/10 select-none",
-        "dark:inset-ring-white/10",
+        "relative size-14 shrink-0 overflow-hidden rounded-md bg-muted text-muted-foreground select-none",
+        "after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:inset-ring-1 after:inset-ring-black/10 dark:after:inset-ring-white/10",
         "[&_img]:size-full [&_img]:object-cover",
         className
       )}

@@ -6,6 +6,7 @@ import { Headphones, Music2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Tag } from "@/components/ui/tag"
+import artworkStyles from "@/features/off-clock/components/artwork.module.css"
 import {
   ShelfArt,
   ShelfCard,
@@ -13,6 +14,7 @@ import {
 import { useVisibleResource } from "@/features/off-clock/lib/use-visible-resource"
 
 import type { NowPlaying } from "../lib/now-playing"
+import styles from "./now-playing.module.css"
 
 function durationLabel(milliseconds: number) {
   const seconds = Math.floor(milliseconds / 1000)
@@ -62,36 +64,25 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
         }
         bodyClassName="min-h-56 gap-5 pt-5"
       >
-        <div className="flex flex-1 items-center gap-4 sm:gap-5">
-          <ShelfArt className="size-28 rounded-lg sm:size-24 md:size-32">
-            {track?.artwork ? (
-              <Image
-                src={track.artwork}
-                width={256}
-                height={256}
-                unoptimized
-                alt={`${track.album || track.title} album cover`}
-              />
-            ) : (
-              <span className="flex size-full items-center justify-center">
-                <Headphones aria-hidden strokeWidth={1} className="size-10" />
-              </span>
-            )}
-          </ShelfArt>
+        <div className="flex flex-1 items-center gap-5">
+          <RecordDeck
+            artwork={track?.artwork}
+            alt={`${track?.album || track?.title} album cover`}
+          />
 
           <div className="min-w-0 flex-1">
             <p
-              className="line-clamp-2 text-xl leading-tight font-semibold tracking-tight sm:text-2xl"
+              className="line-clamp-2 text-lg leading-snug font-medium text-balance"
               title={track?.title}
             >
               {track?.title || "A moment of quiet"}
             </p>
-            <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
               {track?.artist || caption}
             </p>
             {track?.album && track.album !== track.title ? (
               <p
-                className="mt-3 truncate font-mono text-xs text-muted-foreground"
+                className="mt-1 truncate text-sm text-muted-foreground/70"
                 title={track.album}
               >
                 {track.album}
@@ -143,6 +134,53 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
           </div>
         </div>
       </ShelfCard>
+    </div>
+  )
+}
+
+/** Album sleeve with the record peeking out behind it. */
+function RecordDeck({ artwork, alt }: { artwork?: string; alt: string }) {
+  return (
+    <div className="relative h-(--sleeve) w-[calc(var(--sleeve)*1.36)] shrink-0 [--sleeve:--spacing(28)] sm:[--sleeve:--spacing(24)] md:[--sleeve:--spacing(32)]">
+      <span
+        aria-hidden
+        className={cn(
+          styles.record,
+          "absolute top-[calc(var(--sleeve)*0.03)] left-[calc(var(--sleeve)*0.4)] size-[calc(var(--sleeve)*0.94)]"
+        )}
+      >
+        <span className={styles.disc}>
+          {artwork ? (
+            <Image
+              src={artwork}
+              width={96}
+              height={96}
+              unoptimized
+              alt=""
+              className={cn(artworkStyles.artwork, styles.label)}
+            />
+          ) : (
+            <span className={styles.label} />
+          )}
+        </span>
+      </span>
+
+      <ShelfArt className="size-(--sleeve) rounded-lg shadow-[6px_0_6px_-6px_rgb(0_0_0/0.6)]">
+        {artwork ? (
+          <Image
+            src={artwork}
+            width={256}
+            height={256}
+            unoptimized
+            alt={alt}
+            className={artworkStyles.artwork}
+          />
+        ) : (
+          <span className="flex size-full items-center justify-center">
+            <Headphones aria-hidden strokeWidth={1} className="size-10" />
+          </span>
+        )}
+      </ShelfArt>
     </div>
   )
 }
