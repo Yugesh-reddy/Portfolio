@@ -1,8 +1,9 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { IconBrandSpotify } from "@tabler/icons-react"
-import { Headphones, Music2 } from "lucide-react"
+import { Headphones } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Tag } from "@/components/ui/tag"
@@ -16,9 +17,29 @@ import { useVisibleResource } from "@/features/off-clock/lib/use-visible-resourc
 import type { NowPlaying } from "../lib/now-playing"
 import styles from "./now-playing.module.css"
 
+const timeFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Chicago",
+  hour: "numeric",
+  minute: "2-digit",
+})
+
+const dayFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Chicago",
+  month: "2-digit",
+  day: "2-digit",
+})
+
 function durationLabel(milliseconds: number) {
   const seconds = Math.floor(milliseconds / 1000)
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+}
+
+/** Same clock as the Moving tile: Chicago time, dated when not today. */
+function playedLabel(iso: string) {
+  const played = new Date(iso)
+  const day = dayFormatter.format(played)
+  const prefix = day === dayFormatter.format(new Date()) ? "" : `${day} · `
+  return `Played ${prefix}${timeFormatter.format(played)} CT`
 }
 
 export function SpotifyNowPlaying({ className }: { className?: string }) {
@@ -27,7 +48,8 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
     30_000
   )
   const playing = data?.status === "playing" ? data : null
-  const track = playing || (data?.status === "recent" ? data : null)
+  const recent = data?.status === "recent" ? data : null
+  const track = playing || recent
   const caption =
     failed || data?.status === "unavailable"
       ? "Listening status unavailable."
@@ -36,7 +58,6 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
         : data.status === "unconfigured"
           ? "Spotify is not connected yet."
           : "Nothing playing right now."
-  const progress = playing?.progressMs
   const state = playing
     ? "Now playing"
     : track
@@ -68,6 +89,7 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
           <RecordDeck
             artwork={track?.artwork}
             alt={`${track?.album || track?.title} album cover`}
+            spinning={Boolean(playing)}
           />
 
           <div className="min-w-0 flex-1">
@@ -91,47 +113,35 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
           </div>
         </div>
 
-        <div className="mt-auto border-t border-dashed border-line pt-3">
-          {playing?.durationMs && progress != null ? (
-            <div className="mb-3 flex items-center gap-3 font-mono text-xs text-muted-foreground tabular-nums">
-              <span>{durationLabel(progress)}</span>
-              <div
-                role="progressbar"
-                aria-label="Song playback position"
-                aria-valuemin={0}
-                aria-valuemax={playing.durationMs}
-                aria-valuenow={progress}
-                aria-valuetext={`${durationLabel(progress)} of ${durationLabel(playing.durationMs)}`}
-                className="h-0.5 flex-1 overflow-hidden rounded-full bg-foreground/10"
-              >
-                <div
-                  className="h-full origin-left bg-foreground/75 motion-safe:transition-transform motion-safe:duration-300"
-                  style={{
-                    transform: `scaleX(${progress / playing.durationMs})`,
-                  }}
-                />
-              </div>
-              <span>{durationLabel(playing.durationMs)}</span>
-            </div>
-          ) : null}
-          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-2">
-              <IconBrandSpotify aria-hidden className="size-4" />
-              <span className="font-medium">Spotify</span>
-            </span>
-            <span className="flex items-center gap-2 font-mono">
-              {!playing && track?.durationMs ? (
-                <>
-                  <Music2 aria-hidden className="size-3" />
-                  {durationLabel(track.durationMs)}
-                  <span aria-hidden className="text-muted-foreground/40">
-                    /
-                  </span>
-                </>
+        <div className="mt-auto flex items-center gap-1.5 border-t border-dashed border-line pt-3 text-xs text-muted-foreground">
+          <IconBrandSpotify aria-hidden className="size-3.5 shrink-0" />
+          {playing?.durationMs && playing.progressMs != null ? (
+            <PlaybackProgress
+              key={`${playing.url}:${playing.progressMs}`}
+              progressMs={playing.progressMs}
+              durationMs={playing.durationMs}
+            />
+          ) : (
+            <>
+              <span className="min-w-0 flex-1 truncate">
+                {recent?.playedAt ? (
+                  <time
+                    dateTime={recent.playedAt}
+                    className="font-mono tabular-nums"
+                  >
+                    {playedLabel(recent.playedAt)}
+                  </time>
+                ) : (
+                  "Spotify"
+                )}
+              </span>
+              {recent?.durationMs ? (
+                <span className="font-mono tabular-nums">
+                  {durationLabel(recent.durationMs)}
+                </span>
               ) : null}
-              {track ? "Listen on Spotify" : "Off the air"}
-            </span>
-          </div>
+            </>
+          )}
         </div>
       </ShelfCard>
     </div>
@@ -139,13 +149,22 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
 }
 
 /** Album sleeve with the record peeking out behind it. */
-function RecordDeck({ artwork, alt }: { artwork?: string; alt: string }) {
+function RecordDeck({
+  artwork,
+  alt,
+  spinning,
+}: {
+  artwork?: string
+  alt: string
+  spinning: boolean
+}) {
   return (
     <div className="relative h-(--sleeve) w-[calc(var(--sleeve)*1.36)] shrink-0 [--sleeve:--spacing(28)] sm:[--sleeve:--spacing(24)] md:[--sleeve:--spacing(32)]">
       <span
         aria-hidden
         className={cn(
           styles.record,
+          spinning && styles.spinning,
           "absolute top-[calc(var(--sleeve)*0.03)] left-[calc(var(--sleeve)*0.4)] size-[calc(var(--sleeve)*0.94)]"
         )}
       >
@@ -181,6 +200,44 @@ function RecordDeck({ artwork, alt }: { artwork?: string; alt: string }) {
           </span>
         )}
       </ShelfArt>
+    </div>
+  )
+}
+
+/** Advances locally between polls; remounted by key on each fresh position. */
+function PlaybackProgress({
+  progressMs,
+  durationMs,
+}: {
+  progressMs: number
+  durationMs: number
+}) {
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    const start = Date.now()
+    const timer = setInterval(() => setElapsed(Date.now() - start), 1000)
+    return () => clearInterval(timer)
+  }, [])
+  const position = Math.min(progressMs + elapsed, durationMs)
+
+  return (
+    <div className="ml-0.5 flex min-w-0 flex-1 items-center gap-3 font-mono tabular-nums">
+      <span>{durationLabel(position)}</span>
+      <div
+        role="progressbar"
+        aria-label="Song playback position"
+        aria-valuemin={0}
+        aria-valuemax={durationMs}
+        aria-valuenow={position}
+        aria-valuetext={`${durationLabel(position)} of ${durationLabel(durationMs)}`}
+        className="h-0.5 flex-1 overflow-hidden rounded-full bg-foreground/10"
+      >
+        <div
+          className="h-full origin-left bg-foreground/75 motion-safe:transition-transform motion-safe:duration-1000 motion-safe:ease-linear"
+          style={{ transform: `scaleX(${position / durationMs})` }}
+        />
+      </div>
+      <span>{durationLabel(durationMs)}</span>
     </div>
   )
 }

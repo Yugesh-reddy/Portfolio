@@ -1,5 +1,5 @@
-/* Vinyl tucked behind the sleeve. It slides out on hover. The sheen stays
-   fixed like real light. */
+/* Vinyl tucked behind the sleeve. It slides out on hover and spins only
+   while a song is actually playing. The sheen stays fixed like real light. */
 .record {
   border-radius: 9999px;
   transition: translate 500ms var(--expo-out);
@@ -66,6 +66,16 @@
   object-fit: cover;
 }
 
+.spinning .disc {
+  animation: turn 4.8s linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   :global(.group):hover .record {
     translate: 14% 0;
@@ -84,6 +94,10 @@
   .record,
   .disc {
     transition: none;
+  }
+
+  .spinning .disc {
+    animation: none;
   }
 
   :global(.group):hover .record,
