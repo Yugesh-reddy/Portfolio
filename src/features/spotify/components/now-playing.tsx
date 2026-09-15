@@ -5,6 +5,7 @@ import { IconBrandSpotify } from "@tabler/icons-react"
 import { Headphones, Music2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { Tag } from "@/components/ui/tag"
 import {
   ShelfArt,
   ShelfCard,
@@ -34,6 +35,13 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
           ? "Spotify is not connected yet."
           : "Nothing playing right now."
   const progress = playing?.progressMs
+  const state = playing
+    ? "Now playing"
+    : track
+      ? "Last played"
+      : data || failed
+        ? "Off the air"
+        : "Tuning in"
 
   return (
     <div ref={ref} className={cn("min-w-0", className)}>
@@ -46,7 +54,13 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
             ? `Listen to ${track.title} by ${track.artist} on Spotify`
             : undefined
         }
-        bodyClassName="min-h-56 gap-5"
+        dividerBadge={
+          <Tag className="gap-1.5">
+            {playing ? <EqBars /> : null}
+            {state}
+          </Tag>
+        }
+        bodyClassName="min-h-56 gap-5 pt-5"
       >
         <div className="flex flex-1 items-center gap-4 sm:gap-5">
           <ShelfArt className="size-28 rounded-lg sm:size-24 md:size-32">
@@ -66,18 +80,6 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
           </ShelfArt>
 
           <div className="min-w-0 flex-1">
-            <p className="mb-2.5 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-              {playing ? (
-                <EqBars />
-              ) : (
-                <Headphones aria-hidden className="size-3.5" />
-              )}
-              {playing
-                ? "Now playing"
-                : track
-                  ? "Last played"
-                  : "On my headphones"}
-            </p>
             <p
               className="line-clamp-2 text-xl leading-tight font-semibold tracking-tight sm:text-2xl"
               title={track?.title}
@@ -147,7 +149,7 @@ export function SpotifyNowPlaying({ className }: { className?: string }) {
 
 function EqBars() {
   return (
-    <span aria-hidden className="flex h-3.5 shrink-0 items-end gap-0.5">
+    <span aria-hidden className="flex h-3 shrink-0 items-end gap-0.5">
       {[0, 1, 2, 3].map((bar) => (
         <span
           key={bar}

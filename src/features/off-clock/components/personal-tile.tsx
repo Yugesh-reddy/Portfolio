@@ -57,7 +57,8 @@ export function ShelfCard({
           ) : null}
         </span>
       </div>
-      <div className={cn("relative mx-4 mt-3", dividerBadge && "mt-4")}>
+      {/* Same offset with or without a badge, so rules align across a row. */}
+      <div className="relative mx-4 mt-4">
         <div aria-hidden className="border-t border-dashed border-line" />
         {dividerBadge ? (
           <div className="absolute top-0 left-0 -translate-y-1/2">
