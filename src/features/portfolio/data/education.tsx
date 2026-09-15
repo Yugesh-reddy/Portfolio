@@ -11,7 +11,7 @@ export const EDUCATION: Education[] = [
       end: "05/2026",
     },
     description: `
-- GPA: 4.0 / 4.0
+- GPA: 3.9 / 4.0
 - Courses:
   - Computer Algorithms
   - Permissionless Systems

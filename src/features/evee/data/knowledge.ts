@@ -4,7 +4,7 @@ export const YUGESH_KNOWLEDGE = `
 - **Name**: Yugesh Reddy Sappidi (also goes by Yugesh)
 - **Role**: AI Engineer. Focus areas: LLM safety and red teaming, adversarial robustness, evaluation, retrieval, and inference cost.
 - **Location**: Chicago, IL, United States
-- **Status**: Completed his MS in Computer Science at UIC in May 2026 (4.0 GPA). Open to AI engineering roles working on LLM systems in production.
+- **Status**: Completed his MS in Computer Science at UIC in May 2026 (3.9 GPA). Open to AI engineering roles working on LLM systems in production.
 - **Bio**: He works on the gap between a model that demos well and a model you can ship: whether it holds up under attack, what it costs per query, and whether the output is grounded in something verifiable.
 - **How he works**: Every project ships with baselines it could lose to, bootstrap confidence intervals rather than single numbers, and an ablation designed to explain the headline result away. He publishes negative results (see the DPO regression in MediCS) instead of dropping them.
 - **Contact & Links**:
@@ -18,7 +18,7 @@ export const YUGESH_KNOWLEDGE = `
 1. **University of Illinois Chicago (UIC)**
    - Degree: Master of Science in Computer Science
    - Duration: August 2024 - May 2026
-   - GPA: 4.0 / 4.0
+   - GPA: 3.9 / 4.0
    - Relevant Coursework: Computer Algorithms, Permissionless Systems, Data Science, Agentic Systems, Visual Analytics, Natural Language Processing, Visual Data Science, Data & Algorithmic Fairness, Deep Learning for Computer Vision.
 
 2. **Sreenidhi Institute of Science and Technology (SNIST)**
