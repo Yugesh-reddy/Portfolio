@@ -31,30 +31,37 @@ export function WatchingTile({ className }: { className?: string }) {
         )}
       >
         <div className={cn(ticket.admission, "p-1.5")}>
-          {feature?.image ? (
-            <div className="relative overflow-hidden rounded-sm bg-muted after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:inset-ring-1 after:inset-ring-black/10 dark:after:inset-ring-white/10">
+          <div className="relative aspect-6/7 overflow-hidden rounded-sm bg-muted after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:inset-ring-1 after:inset-ring-black/10 dark:after:inset-ring-white/10">
+            {feature?.image ? (
               <Image
                 src={feature.image}
                 alt={feature.imageAlt || feature.title}
-                width={528}
-                height={776}
+                fill
                 sizes="240px"
-                className={cn(styles.artwork, "block h-auto w-full")}
+                className={cn(styles.artwork, "object-cover object-top")}
               />
-            </div>
-          ) : (
-            <span className="flex min-h-36 items-center justify-center text-muted-foreground">
-              <Clapperboard aria-hidden strokeWidth={1} className="size-10" />
-            </span>
-          )}
+            ) : (
+              <span className="flex size-full items-center justify-center text-muted-foreground">
+                <Clapperboard aria-hidden strokeWidth={1} className="size-10" />
+              </span>
+            )}
+          </div>
         </div>
 
         <div className={cn(ticket.stub, "px-3 pt-3 pb-3")}>
           <span aria-hidden className={ticket.perforation} />
-          <p className="leading-snug font-medium text-balance">{title}</p>
-          {feature?.note || !feature ? (
+          <p className="flex justify-between gap-3 font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+            <span>Admit one</span>
+            {feature?.note ? (
+              <span className="truncate">{feature.note}</span>
+            ) : null}
+          </p>
+          <p className="mt-1.5 leading-snug font-medium text-balance">
+            {title}
+          </p>
+          {!feature ? (
             <p className="mt-0.5 text-sm text-muted-foreground">
-              {feature?.note || "Always up for a good story."}
+              Always up for a good story.
             </p>
           ) : null}
         </div>
