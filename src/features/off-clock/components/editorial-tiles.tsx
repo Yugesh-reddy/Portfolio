@@ -64,9 +64,40 @@ export function WatchingTile({ className }: { className?: string }) {
               Always up for a good story.
             </p>
           ) : null}
+          <Barcode
+            value={title}
+            className="mt-3 h-4 w-full text-muted-foreground/50"
+          />
         </div>
       </div>
     </ShelfCard>
+  )
+}
+
+/** Decorative stub barcode, derived from the title so it never changes. */
+function Barcode({ value, className }: { value: string; className?: string }) {
+  let x = 0
+  let end = 0
+  let path = ""
+  for (const char of value) {
+    const code = char.charCodeAt(0)
+    for (const bits of [code & 3, (code >> 2) & 3]) {
+      const width = (bits % 3) + 1
+      path += `M${x} 0h${width}v1h-${width}z`
+      end = x + width
+      x = end + ((code >> 4) & 1) + 1
+    }
+  }
+  return (
+    <svg
+      aria-hidden
+      viewBox={`0 0 ${end} 1`}
+      preserveAspectRatio="none"
+      shapeRendering="crispEdges"
+      className={className}
+    >
+      <path d={path} fill="currentColor" />
+    </svg>
   )
 }
 
