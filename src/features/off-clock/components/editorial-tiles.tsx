@@ -1,14 +1,16 @@
 import Image from "next/image"
 import { Clapperboard, MapPinned } from "lucide-react"
 
-import { Tag } from "@/components/ui/tag"
+import { cn } from "@/lib/utils"
 
 import { INTERESTS } from "../data/interests"
 import styles from "./artwork.module.css"
 import { ShelfBadge, ShelfCard } from "./personal-tile"
+import ticket from "./ticket.module.css"
 
 export function WatchingTile({ className }: { className?: string }) {
   const feature = INTERESTS.watching.feature
+  const title = feature?.title || "Movies & anime"
   return (
     <ShelfCard
       index="03"
@@ -19,38 +21,39 @@ export function WatchingTile({ className }: { className?: string }) {
           ? [feature.title, feature.note].filter(Boolean).join(" · ")
           : undefined
       }
-      dividerBadge={<Tag>Admit one</Tag>}
-      bodyClassName="pt-5"
       className={className}
     >
-      {feature?.image ? (
-        <div className="relative mb-3 w-full max-w-44 self-center overflow-hidden rounded-lg bg-muted inset-ring-1 inset-ring-black/10 select-none dark:inset-ring-white/10">
-          <Image
-            src={feature.image}
-            alt={feature.imageAlt || feature.title}
-            width={528}
-            height={776}
-            sizes="176px"
-            className={`${styles.artwork} block h-auto w-full`}
-          />
+      {/* Paper is the Tag material, so "Admit one" grows into the ticket. */}
+      <div
+        className={cn(
+          ticket.ticket,
+          "w-full max-w-60 self-center select-none [--paper:var(--color-zinc-50)] dark:[--paper:var(--color-zinc-900)]"
+        )}
+      >
+        <div className={cn(ticket.admission, "p-1.5")}>
+          {feature?.image ? (
+            <div className="relative overflow-hidden rounded-sm bg-muted after:pointer-events-none after:absolute after:inset-0 after:rounded-[inherit] after:inset-ring-1 after:inset-ring-black/10 dark:after:inset-ring-white/10">
+              <Image
+                src={feature.image}
+                alt={feature.imageAlt || feature.title}
+                width={528}
+                height={776}
+                sizes="240px"
+                className={cn(styles.artwork, "block h-auto w-full")}
+              />
+            </div>
+          ) : (
+            <span className="flex min-h-36 items-center justify-center text-muted-foreground">
+              <Clapperboard aria-hidden strokeWidth={1} className="size-10" />
+            </span>
+          )}
         </div>
-      ) : null}
 
-      <div className="flex items-center gap-2.5">
-        {!feature?.image ? (
-          <ShelfBadge>
-            <Clapperboard />
-          </ShelfBadge>
-        ) : null}
-        <div className="min-w-0">
-          <p
-            className="leading-snug font-medium text-balance"
-            title={feature?.title || "Movies & anime"}
-          >
-            {feature?.title || "Movies & anime"}
-          </p>
+        <div className={cn(ticket.stub, "px-3 pt-3 pb-3")}>
+          <span aria-hidden className={ticket.perforation} />
+          <p className="leading-snug font-medium text-balance">{title}</p>
           {feature?.note || !feature ? (
-            <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {feature?.note || "Always up for a good story."}
             </p>
           ) : null}
