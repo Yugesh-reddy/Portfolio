@@ -4,8 +4,8 @@ import { Clapperboard, MapPinned } from "lucide-react"
 import { Tag } from "@/components/ui/tag"
 
 import { INTERESTS } from "../data/interests"
+import styles from "./artwork.module.css"
 import { ShelfBadge, ShelfCard } from "./personal-tile"
-import styles from "./watching-tile.module.css"
 
 export function WatchingTile({ className }: { className?: string }) {
   const feature = INTERESTS.watching.feature
@@ -31,7 +31,7 @@ export function WatchingTile({ className }: { className?: string }) {
             width={528}
             height={776}
             sizes="176px"
-            className={`${styles.poster} block h-auto w-full`}
+            className={`${styles.artwork} block h-auto w-full`}
           />
         </div>
       ) : null}
