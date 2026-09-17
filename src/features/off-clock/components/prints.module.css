@@ -1,0 +1,96 @@
+/* Instant prints lying on the table. Each print sets its own resting pose
+   (--tilt, --drop) and fanned pose (--fan-tilt, --fan-x); hovering the card
+   fans them apart and lifts them off the surface.
+
+   The table is a size container, so the prints never set the tile's height:
+   they fill the table's height instead. Stacked on mobile, that is the
+   18rem min-height, the same as the ticket's fixed h-72. Beside the ticket,
+   the table stretches to the row height the ticket sets. Either way, both
+   tiles' objects share the same top and bottom line. */
+.table {
+  --corner: 6px; /* how far a tilted corner pokes past its box */
+  --drop-max: 14px; /* the largest --drop in PRINT_POSES */
+  --strip: 4.25rem; /* room for an exposure line wrapped onto two lines */
+  container-type: size;
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 18rem;
+  padding-top: var(--corner);
+}
+
+@media (width >= 40rem) {
+  .table {
+    --strip: 4rem;
+    min-height: 20rem;
+  }
+}
+
+.print {
+  position: relative;
+  flex: none;
+  width: min(
+    calc(
+      (100cqh - var(--corner) - var(--drop-max) - 0.625rem - var(--strip)) * 3 /
+        4 + 1.25rem
+    ),
+    calc((100cqw + 0.75rem) / 2)
+  );
+  padding: 0.625rem 0.625rem 0;
+  border-radius: 3px;
+  background: var(--paper);
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 1px 2px rgb(0 0 0 / 0.05),
+    0 10px 20px -12px rgb(0 0 0 / 0.35);
+  rotate: var(--tilt);
+  translate: 0 var(--drop);
+  transition:
+    rotate 600ms var(--expo-out),
+    translate 600ms var(--expo-out),
+    box-shadow 400ms ease;
+}
+
+.print + .print {
+  margin-left: -0.75rem;
+}
+
+/* A longer caption may grow the strip; the dropped neighbour still sets the
+   lowest edge, so the bottom line holds. */
+.strip {
+  min-height: var(--strip);
+}
+
+/* The next print overlaps this one's lower right corner once both tilt. */
+.print:not(:last-child) .strip {
+  padding-right: 1.75rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(.group):hover .print {
+    rotate: var(--fan-tilt);
+    translate: var(--fan-x) calc(var(--drop) - 4px);
+    box-shadow:
+      0 0 0 1px var(--border),
+      0 2px 4px rgb(0 0 0 / 0.06),
+      0 18px 30px -14px rgb(0 0 0 / 0.45);
+  }
+}
+
+:global(.group):focus-visible .print {
+  rotate: var(--fan-tilt);
+  translate: var(--fan-x) calc(var(--drop) - 4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .print {
+    transition: none;
+  }
+
+  :global(.group):hover .print,
+  :global(.group):focus-visible .print {
+    rotate: var(--tilt);
+    translate: 0 var(--drop);
+  }
+}
