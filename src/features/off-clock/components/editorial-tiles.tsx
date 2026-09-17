@@ -14,7 +14,7 @@ export function WatchingTile({ className }: { className?: string }) {
   return (
     <ShelfCard
       index="03"
-      label="Recently watched"
+      label="Credits rolled"
       href={feature?.href}
       linkLabel={
         feature
