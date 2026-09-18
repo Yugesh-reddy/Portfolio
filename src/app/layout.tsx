@@ -1,5 +1,6 @@
 import "@/styles/globals.css"
 
+import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
@@ -157,6 +158,7 @@ export default function RootLayout({
         <Providers>
           <NuqsAdapter>{children}</NuqsAdapter>
         </Providers>
+        <Analytics />
       </body>
     </html>
   )
