@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { DownloadIcon, ExternalLinkIcon, FileTextIcon } from "lucide-react"
 
-import { X_HANDLE } from "@/config/site"
+import { SHARE_IMAGES, X_HANDLE } from "@/config/site"
 import { Button } from "@/components/ui/button"
 import {
   PageHeading,
@@ -16,8 +16,6 @@ import { USER } from "@/features/portfolio/data/user"
 const title = "Resume"
 const description = "Experience, projects, and education in a single PDF."
 
-const ogImage = `/og/simple?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`
-
 // The PDF lives in /public, so it is same-origin and the `download` attribute works.
 const RESUME_FILE = "/resume.pdf"
 const DOWNLOAD_NAME = `${USER.displayName.replace(/\s+/g, "-")}-Resume.pdf`
@@ -31,18 +29,13 @@ export const metadata: Metadata = {
   openGraph: {
     url: "/resume",
     type: "website",
-    images: {
-      url: ogImage,
-      width: 1200,
-      height: 630,
-      alt: title,
-    },
+    images: [...SHARE_IMAGES],
   },
   twitter: {
     card: "summary_large_image",
     site: X_HANDLE,
     creator: X_HANDLE,
-    images: [ogImage],
+    images: [...SHARE_IMAGES],
   },
 }
 

@@ -6,7 +6,12 @@ import Script from "next/script"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
 import type { WebSite, WithContext } from "schema-dts"
 
-import { META_THEME_COLORS, SITE_INFO, X_HANDLE } from "@/config/site"
+import {
+  META_THEME_COLORS,
+  SHARE_IMAGES,
+  SITE_INFO,
+  X_HANDLE,
+} from "@/config/site"
 import { fontVariables } from "@/lib/fonts"
 import { Providers } from "@/components/providers"
 import { USER } from "@/features/portfolio/data/user"
@@ -60,20 +65,13 @@ export const metadata: Metadata = {
     lastName: USER.lastName,
     username: USER.username,
     gender: USER.gender,
-    images: [
-      {
-        url: SITE_INFO.ogImage,
-        width: 1200,
-        height: 630,
-        alt: SITE_INFO.name,
-      },
-    ],
+    images: [...SHARE_IMAGES],
   },
   twitter: {
     card: "summary_large_image",
     site: X_HANDLE,
     creator: X_HANDLE,
-    images: [SITE_INFO.ogImage],
+    images: [...SHARE_IMAGES],
   },
   icons: {
     icon: [

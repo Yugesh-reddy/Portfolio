@@ -5,7 +5,7 @@ import { getTableOfContents } from "fumadocs-core/content/toc"
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react"
 import type { BlogPosting as PageSchema, WithContext } from "schema-dts"
 
-import { SITE_INFO, X_HANDLE } from "@/config/site"
+import { SHARE_IMAGES, SITE_INFO, X_HANDLE } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
@@ -59,9 +59,9 @@ export async function generateMetadata({
   const { title, description, image, createdAt, updatedAt } = doc.metadata
 
   const postUrl = getDocUrl(doc)
-  const ogImage =
-    image ||
-    `/og/simple?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}`
+  const ogImages = image
+    ? [{ url: image, width: 1200, height: 630, alt: title }]
+    : [...SHARE_IMAGES]
 
   return {
     title,
@@ -74,18 +74,13 @@ export async function generateMetadata({
       type: "article",
       publishedTime: new Date(createdAt).toISOString(),
       modifiedTime: new Date(updatedAt).toISOString(),
-      images: {
-        url: ogImage,
-        width: 1200,
-        height: 630,
-        alt: title,
-      },
+      images: ogImages,
     },
     twitter: {
       card: "summary_large_image",
       site: X_HANDLE,
       creator: X_HANDLE,
-      images: [ogImage],
+      images: ogImages,
     },
   }
 }
@@ -96,9 +91,7 @@ function getPageJsonLd(doc: Doc): WithContext<PageSchema> {
     "@type": "BlogPosting",
     headline: doc.metadata.title,
     description: doc.metadata.description,
-    image:
-      doc.metadata.image ||
-      `/og/simple?title=${encodeURIComponent(doc.metadata.title)}&description=${encodeURIComponent(doc.metadata.description)}`,
+    image: doc.metadata.image || SITE_INFO.ogImage,
     url: `${SITE_INFO.url}${getDocUrl(doc)}`,
     datePublished: new Date(doc.metadata.createdAt).toISOString(),
     dateModified: new Date(doc.metadata.updatedAt).toISOString(),
