@@ -50,26 +50,28 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "adattt",
-    title: "AdaTTT: Deciding When a Vision-Language Model Should Adapt",
+    title:
+      "AdaTTT: Test-Time Adaptation That Did Not Pay, and the Fallback That Did",
     period: { start: "03.2026", end: "07.2026" },
     link: "https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training",
     skills: [
       "PyTorch",
-      "ViT-B/16 + BERT",
-      "Test-Time Training",
-      "Self-Supervision",
-      "CUDA Profiling",
-      "Gradio",
+      "CLIP ViT-B/16",
+      "Test-Time Adaptation",
+      "Pre-Registered Evaluation",
+      "Selective Prediction",
+      "Colab A100 Orchestration",
     ],
-    description: `Test-time training takes a few gradient steps on each test sample before answering. It also runs on the easy samples, where the compute is wasted and the accuracy sometimes gets worse. AdaTTT puts a learned gate in front of it.
+    description: `The course version put a learned gate in front of test-time training. The follow-up asked the harder question: under real distribution shift, does adaptation recover anything worth its compute, and if not, what does? Every experiment was pre-registered, and the evaluation split stayed sealed until the method was frozen in git.
 
-- **The gate learns the right question.** It is supervised on the correctness *delta* between the base and TTT-adapted forward passes, so it predicts "would adaptation help here?" rather than "is the base model right?". That distinction is what makes it transfer.
-- **Base accuracy at base cost.** On VQA-v2 (214,354 samples), the gate at τ=0.95 holds accuracy at 0.4952 against a 0.4956 base, using 47.3 GFLOPs versus 64.9 for running TTT on everything. It skips 94.5% of samples.
-- **More adaptation is not better.** Running K=3 and K=5 steps on every sample drops accuracy to 0.4666 and 0.4648 while nearly tripling compute. The gate exists because that curve bends the wrong way, which is the result worth reporting.
-- **Transfers without retraining.** The VQA-trained gate moves to Memotion2 meme sentiment at 0.7165 accuracy while skipping half the samples.
-- **Built like a system.** Frozen ViT-B/16 and BERT encoders with TTT touching only the fusion head, 25.9 ms p50 end to end on an H100, precomputed encoder features for 5-10× faster sweeps, 94 tests, 9 figures, bootstrap CIs on every number, and an IEEE-format writeup.
+- **The encoder was the ceiling, not the adaptation.** Swapping frozen ViT-B/16 + BERT for CLIP ViT-B/16, with the fusion stack held fixed, moved VQA-v2 val from 59.93 to 67.50 official soft accuracy. The +7.57 point gap is the controlled encoder effect; v1 had been tuning the wrong component.
+- **Three silent bugs, found in the gradients.** The first run looked plausible and was broken: the gate's auxiliary loss outweighed the answer loss 19× on the fusion gradient, \`<UNK>\` was a positive training target on 31% of questions, and the logged metric credited those \`<UNK>\` answers. Each fix shipped with a regression test.
+- **Adaptation did not pay.** Gaussian noise costs 6.40 points. MEMO-style adaptation was tested at the original step size, at a step size chosen on held-out data, and behind a gate trained to predict per-sample benefit. The best result is +0.18 points, 95% CI −0.11 to +0.47. A per-sample oracle shows +1.72 is there to recover, so the headroom is real — but nothing I logged predicts *who* benefits above AUROC 0.57. That, not the step size, is the limit.
+- **The protocol was the point.** Selection and stop rules lived in code before each run, the gate specification had to be committed before the scorer would read the evaluation outcomes, and FLOPs counted what a served request actually runs, including the backward pass through every augmented view. Results reproduced exactly across sessions.
+- **What did work: knowing when not to answer.** One confidence threshold, fit on a held-out split, raises accuracy on the answered questions by 5.3 points at 90% coverage and 10.4 at 80%, and holds across clean, blurred and noised images at no extra compute. Under heavy noise, answering the confident 80% beats the clean model answering everything.
+- **Built to be checked.** Preemption-safe Colab A100 orchestration (token refresh, orphan-VM recovery, verified checkpoint relay, hard budget cap) tested against a simulated Colab across 18 failure scenarios, 280 tests in CI, an answer-or-abstain demo, and a published release whose artifacts rebuild every number and figure byte-for-byte on a CPU.
 
-Course project for CS 518 (Deep Learning for Computer Vision, UIC) with Aishwarya Reddy Chinthalapudi and Aryan Shetty.`,
+Began as a course project for CS 518 (Deep Learning for Computer Vision, UIC) with Aishwarya Reddy Chinthalapudi and Aryan Shetty; the follow-up study above is the solo continuation.`,
     logo: "/icons/adattt.svg",
     isExpanded: false,
   },
