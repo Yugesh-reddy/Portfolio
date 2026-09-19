@@ -42,6 +42,7 @@ I build with strong baselines, confidence intervals, and ablations, and I docume
     darkOn: "/yugesh.png",
   },
   ogImage: "/og.png",
+  ogImageLight: "/og-light.png",
   namePronunciationUrl: "/yugesh-name.mp3",
   timeZone: "America/Chicago",
   keywords: [

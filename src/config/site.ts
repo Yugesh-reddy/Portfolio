@@ -5,9 +5,26 @@ export const SITE_INFO = {
   name: USER.displayName,
   url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   ogImage: USER.ogImage,
+  ogImageLight: USER.ogImageLight,
   description: USER.bio,
   keywords: USER.keywords,
 }
+
+/** Default link-preview images. Crawlers use the first entry. */
+export const SHARE_IMAGES = [
+  {
+    url: USER.ogImageLight,
+    width: 1200,
+    height: 630,
+    alt: USER.displayName,
+  },
+  {
+    url: USER.ogImage,
+    width: 1200,
+    height: 630,
+    alt: USER.displayName,
+  },
+] as const
 
 export const META_THEME_COLORS = {
   light: "#ffffff",
