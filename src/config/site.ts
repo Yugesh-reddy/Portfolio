@@ -10,14 +10,8 @@ export const SITE_INFO = {
   keywords: USER.keywords,
 }
 
-/** Default link-preview images. Crawlers use the first entry. */
+/** Single og:image. Extra tags get stacked as a gallery in iMessage. */
 export const SHARE_IMAGES = [
-  {
-    url: USER.ogImageLight,
-    width: 1200,
-    height: 630,
-    alt: USER.displayName,
-  },
   {
     url: USER.ogImage,
     width: 1200,

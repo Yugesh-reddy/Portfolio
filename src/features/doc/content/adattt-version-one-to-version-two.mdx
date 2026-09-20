@@ -1,0 +1,126 @@
+---
+title: "AdaTTT, version one to version two: what changed and why"
+description: "The first version of AdaTTT put a gate in front of test-time training and matched base accuracy while skipping most of the work. The second version asked harder questions about it, found a better encoder, three training bugs, and a use for the gate I did not expect."
+category: engineering
+createdAt: 2026-05-10
+updatedAt: 2026-05-10
+---
+
+AdaTTT started as a course project with a simple idea. A model that answers
+questions about images can take a few extra learning steps on the question in
+front of it before answering. That sometimes helps, and it always costs compute.
+So why run it on every question? Put a small gate in front, and spend the extra
+compute only where it pays.
+
+This is the story of how that idea was built, and what the second round of work
+changed about it.
+
+## How the first version worked
+
+The model had three parts. Two frozen encoders, one for the image and one for
+the question, neither of which I trained. A small fusion network on top, which
+I did train. And a gate that looked at the fusion network's confidence and
+decided whether to run the extra adaptation steps.
+
+The interesting part was how the gate was taught. I did not train it to guess
+whether the model was right. I trained it on the difference between two runs of
+the same question, one with adaptation and one without. So the gate learned to
+answer a narrower question: would adaptation change this answer for the better?
+
+It worked. On VQA-v2, the gate held accuracy level with the base model while
+skipping the extra work on roughly 94 percent of questions. Running more
+adaptation steps on everything actually made accuracy worse, which is the
+result that made the gate worth building in the first place.
+
+Two things were still open at that point. Everything was measured on clean
+images, so I had not shown what happens when the picture itself gets harder.
+And the accuracy number had problems I had not found yet.
+
+## What the second round changed
+
+### The encoder was the part that mattered
+
+I had spent all my attention on the piece I trained, the fusion network,
+because that was the piece I could change. So the first experiment of the
+second round was boring on purpose: keep the fusion network exactly as it is,
+and swap the frozen encoders for CLIP.
+
+Accuracy went from 59.93 to 67.50. That is a bigger jump than anything the
+adaptation work produced, from a component I had been treating as fixed
+scenery. The lesson stuck with me. Check the parts you are not training before
+you spend months on the parts you are.
+
+### Three bugs that made a run look fine
+
+A training run finished and the numbers looked plausible. They were not.
+Reading the gradients showed the gate's helper loss was about nineteen times
+larger than the answer loss, so the fusion network was mostly learning to
+satisfy the gate instead of learning to answer questions. Then the labels showed
+that any answer outside the answer vocabulary had been folded into a single
+placeholder, and that placeholder was being taught as a correct answer on
+roughly a third of the questions. And the score I was printing gave credit for
+those placeholder answers, which is why nothing looked wrong.
+
+Each fix got a test that fails if the bug ever comes back. This was the most
+useful week of the project, and none of it produced a new feature.
+
+### Testing adaptation where it should matter
+
+Clean images were never the interesting case. So I blurred and added noise to
+the test images and measured what adaptation could win back.
+
+Heavy noise costs about 6.4 points of accuracy. Adaptation recovered at most
+0.18 of those points, and the error bars on that number include zero. I tried
+it three ways, including one where the settings and the gate were both chosen on
+a separate slice of data so the test set never influenced them.
+
+Here is the part I found genuinely interesting. If you could magically know, for
+each question, whether to adapt or not, you would win back 1.72 points. So the
+opportunity is real. The problem is that none of the signals available before
+answering tell you which questions those are. Adaptation helped about as many
+questions as it hurt, and nothing predicted which was which.
+
+That is a cleaner result than "it does not work". It says the hard part is not
+the adaptation, it is the deciding.
+
+### The rules came before the results
+
+One practical change, and the one I would keep in every project. The decision
+rules were written into the code before each run: which settings to try, how to
+pick the winner, and when to stop. The evaluation data stayed unopened until the
+method was frozen and committed. If the method changes after you look at the
+test set, the test set is no longer a test.
+
+## Where the gate found its real job
+
+The gate could not tell which questions adaptation would help. It turned out to
+be good at something else: knowing when the model is likely to be wrong at all.
+
+So instead of using it to spend more compute, I used it to decline. Set one
+threshold on separate data, let the model answer only the questions it is
+confident about, and hand the rest to a person or a bigger model.
+
+Answering 90 percent of questions raises accuracy on the answered ones by 5.3
+points. Answering 80 percent raises it by 10.4. The same threshold works on
+clean, blurred and noisy images, and it costs nothing extra to run. On heavily
+noisy images, answering the confident 80 percent beats the clean model answering
+everything.
+
+The first version asked when a model should think twice. The second version
+found that the more valuable question, at least here, is when it should stay
+quiet.
+
+## Three things I took from it
+
+Check the components you are not training. The frozen encoder was worth more
+than every adaptation experiment combined.
+
+Write down how you will decide before you run the thing. It is uncomfortable
+exactly when it matters.
+
+A model that knows when not to answer can be worth more than one that adapts.
+Abstention was the cheapest change in the project and it produced the largest
+honest gain.
+
+The code, the writeup with every number, and a small demo you can run are in the
+[repository](https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training).

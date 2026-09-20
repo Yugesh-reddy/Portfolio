@@ -46,7 +46,7 @@ learn and improve rather than relying on static guardrails.
   https://github.com/Yugesh-reddy/MediCS-Red-Teaming
 - Custos — Adaptive Immune Defense for Multi-Agent LLM Networks:
   https://github.com/Yugesh-reddy/Custos-Multi-Agent-Network
-- AdaTTT — When a Vision-Language Model Should Adapt, and When to Abstain:
+- AdaTTT — Deciding When a Vision-Language Model Should Adapt:
   https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training
 - LLM Reasoning & Factuality:
   https://github.com/Yugesh-reddy/LLM-Reasoning-and-Factuality

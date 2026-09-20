@@ -50,8 +50,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "adattt",
-    title:
-      "AdaTTT: Test-Time Adaptation That Did Not Pay, and the Fallback That Did",
+    title: "AdaTTT: Deciding When a Vision-Language Model Should Adapt",
     period: { start: "03.2026", end: "07.2026" },
     link: "https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training",
     skills: [
@@ -62,16 +61,16 @@ export const PROJECTS: Project[] = [
       "Selective Prediction",
       "Colab A100 Orchestration",
     ],
-    description: `The course version put a learned gate in front of test-time training. The follow-up asked the harder question: under real distribution shift, does adaptation recover anything worth its compute, and if not, what does? Every experiment was pre-registered, and the evaluation split stayed sealed until the method was frozen in git.
+    description: `Test-time adaptation takes a few gradient steps on each test sample before answering, including on the easy ones where the compute is wasted. AdaTTT puts a learned gate in front of that decision, then asks how much the gate can actually buy: under real distribution shift, on frozen encoders, with every number defended.
 
-- **The encoder was the ceiling, not the adaptation.** Swapping frozen ViT-B/16 + BERT for CLIP ViT-B/16, with the fusion stack held fixed, moved VQA-v2 val from 59.93 to 67.50 official soft accuracy. The +7.57 point gap is the controlled encoder effect; v1 had been tuning the wrong component.
-- **Three silent bugs, found in the gradients.** The first run looked plausible and was broken: the gate's auxiliary loss outweighed the answer loss 19× on the fusion gradient, \`<UNK>\` was a positive training target on 31% of questions, and the logged metric credited those \`<UNK>\` answers. Each fix shipped with a regression test.
-- **Adaptation did not pay.** Gaussian noise costs 6.40 points. MEMO-style adaptation was tested at the original step size, at a step size chosen on held-out data, and behind a gate trained to predict per-sample benefit. The best result is +0.18 points, 95% CI −0.11 to +0.47. A per-sample oracle shows +1.72 is there to recover, so the headroom is real — but nothing I logged predicts *who* benefits above AUROC 0.57. That, not the step size, is the limit.
-- **The protocol was the point.** Selection and stop rules lived in code before each run, the gate specification had to be committed before the scorer would read the evaluation outcomes, and FLOPs counted what a served request actually runs, including the backward pass through every augmented view. Results reproduced exactly across sessions.
-- **What did work: knowing when not to answer.** One confidence threshold, fit on a held-out split, raises accuracy on the answered questions by 5.3 points at 90% coverage and 10.4 at 80%, and holds across clean, blurred and noised images at no extra compute. Under heavy noise, answering the confident 80% beats the clean model answering everything.
-- **Built to be checked.** Preemption-safe Colab A100 orchestration (token refresh, orphan-VM recovery, verified checkpoint relay, hard budget cap) tested against a simulated Colab across 18 failure scenarios, 280 tests in CI, an answer-or-abstain demo, and a published release whose artifacts rebuild every number and figure byte-for-byte on a CPU.
+- **The gate learns the right question.** It is supervised on the correctness *delta* between the base and adapted forward passes, so it predicts "would adaptation help here?" rather than "is the base model right?". Every later result is a measurement of how far that question can be pushed.
+- **The encoder turned out to be the ceiling.** Holding the fusion stack fixed and swapping frozen ViT-B/16 + BERT for CLIP ViT-B/16 moved VQA-v2 val from 59.93 to 67.50 official soft accuracy, a controlled +7.57 point encoder effect that dwarfed anything adaptation was doing.
+- **Three silent training bugs, found in the gradients.** A run that looked plausible was not: the gate's auxiliary loss outweighed the answer loss 19× on the fusion gradient, \`<UNK>\` was a positive training target on 31% of questions, and the logged metric credited those answers. Each fix shipped with a regression test.
+- **Adaptation, measured honestly under shift.** Gaussian noise costs 6.40 points. MEMO-style adaptation was tested at three operating points, including a step size and a benefit-predicting gate both chosen on held-out data. Best result: +0.18 points, 95% CI −0.11 to +0.47, against a per-sample oracle of +1.72. The headroom is real; no available signal predicts who benefits above AUROC 0.57, which is the honest limit of gating adaptation here.
+- **Where the gate pays: knowing when not to answer.** The same confidence signal, thresholded on a held-out split, raises accuracy on answered questions by 5.3 points at 90% coverage and 10.4 at 80%, holds across clean, blurred and noised images, and costs nothing extra. Under heavy noise, answering the confident 80% beats the clean model answering everything.
+- **Built to be checked.** Pre-registered selection and stop rules, an evaluation split sealed until each method was frozen in git, FLOPs counted as a served request would pay them, preemption-safe Colab A100 orchestration tested across 18 simulated failure scenarios, 280 tests in CI, an answer-or-abstain demo, and a release whose artifacts rebuild every number and figure byte-for-byte on a CPU.
 
-Began as a course project for CS 518 (Deep Learning for Computer Vision, UIC) with Aishwarya Reddy Chinthalapudi and Aryan Shetty; the follow-up study above is the solo continuation.`,
+Built for CS 518 (Deep Learning for Computer Vision, UIC) with Aishwarya Reddy Chinthalapudi and Aryan Shetty, and developed further since.`,
     logo: "/icons/adattt.svg",
     isExpanded: false,
   },
