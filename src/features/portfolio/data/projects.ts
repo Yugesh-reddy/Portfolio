@@ -2,6 +2,33 @@ import type { Project } from "../types/projects"
 
 export const PROJECTS: Project[] = [
   {
+    id: "mnemo",
+    title: "Mnemo: One Shared, Versioned Memory for Coding Agents",
+    period: { start: "06.2026" },
+    link: "https://github.com/Yugesh-reddy/Mnemo",
+    skills: [
+      "Python",
+      "Postgres + pgvector",
+      "MCP Server",
+      "Event Sourcing",
+      "Claude Code + Codex",
+      "Agent Evaluation",
+    ],
+    description: `Claude Code and Codex forget everything between sessions, and neither knows what the other was told. Mnemo is one local memory both use over MCP: scoped to your git repository, attributed to the agent that made each change, and versioned so any change can be undone. It began as a different project, and the pivot is most of the story.
+
+- **Where it started: a write-time quality gate.** Agent memory stores mostly junk (Mem0 issue #4573: 97.8% of 10,134 entries were noise). The first Mnemo extracted facts from conversations and verified, deduplicated and scored each one before storing it. On an 18-turn scripted test, precision rose from 60% to 90.9% with zero false memories.
+- **Real conversations did not hold up.** Over eleven cycles with frozen protocols, small local extractors scored 1.41% strict precision on a 200-turn conversation and 0 of 9 must-keep facts on a holdout. A stronger hosted model extracted more, but one-value-per-key storage overwrote correct facts. I wrote up each failure instead of tuning around it.
+- **The decision: let the agent choose what to remember.** A coding agent already knows what mattered in its own session. I parked the extraction pipeline (still tested, not deleted) and made six guarded MCP tools the main path. A survey of Mem0, Cognee and Timescale showed history and undo exist elsewhere, so I competed on guarantees instead.
+- **Guarantees enforced by the database.** Postgres triggers reject edits to past events. Updates must name the revision they read, so stale and racing writes fail. Each change commits its event, new HEAD and an idempotency receipt in one transaction, so a retry replays instead of applying twice. Revert restores an old value as a new revision.
+- **Shared without losing who did what.** At first Codex could not see anything Claude Code had saved, because reads were filtered by agent ID. I split the writer from the scope: each agent writes under its own name, and memory lives in a project scope keyed by the git remote, plus a global scope for preferences like "always use uv".
+- **Measured with the real agents.** Ten scenarios run 23 real Claude Code and Codex sessions in throwaway repositories, with prompts that never mention memory. The baseline passed 4 of 10: Codex never saved anything, replying "I'll remember that" without calling a tool. A short memory policy in its instructions took both agents to 10 of 10.
+- **Guards limit damage; they cannot judge intent.** When Azure Luna drove the tools, it answered an ambiguous "undo that" by reverting two memories instead of asking. No revision check can know whether a write was wanted. What the store guarantees is that such a change is attributed, visible in history, and one revert from undone.
+- **Installable by someone else.** \`uv tool install\`, then \`mnemo up\` and \`mnemo install\`, which checks Postgres and Ollama first, shows every config change before making it, and uninstalls cleanly. Errors name the command that fixes them, nothing leaves the machine, and a web UI covers search, history and revert. 450+ tests.
+- **What's next.** Harder evals on real repositories and long sessions, with repeated runs reported as rates rather than single passes. Then more of the git layer on top of memory that is proven to work: grouped undo, undoing a creation, and branching and merging memory. Automatic extraction stays parked unless agents need it.`,
+    logo: "/icons/mnemo.svg",
+    isExpanded: true,
+  },
+  {
     id: "medics",
     title: "MediCS: Red-Teaming and Defending a Medical LLM",
     period: { start: "02.2026", end: "05.2026" },
@@ -23,29 +50,6 @@ export const PROJECTS: Project[] = [
 - **MediCS-500.** 500 expert-curated harmful seeds plus 500 benign twins, code-switched into 6 languages with back-translation verification, so jailbreak susceptibility and over-refusal are measured on the same benchmark.
 - **Evaluation.** 3 checkpoints × 3 seeds × 1,599 held-out attacks, judged by GPT-5 at temperature 0. McNemar with Holm-Bonferroni across languages, Cohen's *h*, residual-failure breakdown, cross-architecture transfer, and a fairness audit that treats language as the protected attribute. 213 tests.`,
     logo: "/icons/medics.svg",
-    isExpanded: true,
-  },
-  {
-    id: "mnemo",
-    title: "Mnemo: Agent Memory With a Write-Time Quality Gate",
-    period: { start: "06.2026", end: "07.2026" },
-    skills: [
-      "Python",
-      "Postgres + pgvector",
-      "Event Sourcing",
-      "MCP Server",
-      "FastAPI",
-      "Ollama",
-    ],
-    description: `Agent memory has two diseases: it stores mostly junk, and it invents false facts out of negations and hypotheticals. Mem0 issue #4573 is the clearest public example, where 97.8% of 10,134 stored entries were noise. Mnemo puts a quality gate on the write path and an append-only, bitemporal Postgres store underneath it.
-
-- **The gate.** Every turn runs extract, verify, dedup, score, tier, decay. Negations ("I *don't* use MongoDB") and hypotheticals are rejected before they can become memories. Borderline facts get demoted to a session tier rather than guessed at, so recall is never traded for precision.
-- **Measured against a naive baseline, on the same conversation and extractor.** Precision 60% to 90%, F1 75% to 94.7%, false memories 2 to 0, recall held at 100%. The gate is not just storing less; it is storing the right things.
-- **You can run the number yourself.** \`make eval\` uses a deterministic embedder with no model, no network, and no API key, so the headline reproduces on any machine in one command.
-- **Every decision is reversible.** An immutable event log is the source of truth and current state is just a SQL view of HEAD. \`blame\` says which turn introduced a belief and why it scored what it did; \`revert\` rolls a fact back; \`invalidate\` retires it bitemporally; \`diff\` shows how beliefs changed between two points in time. Nothing is ever overwritten.
-- **Principled forgetting.** Ebbinghaus decay (R = e^(−t/S)) fades unused facts, recall reinforces them, and faded facts are archived through an appended event rather than deleted.
-- **Shipped as a product surface.** MCP server with 8 tools, a Python SDK, a web UI for the audit-and-revert flow, and hybrid FTS plus vector retrieval reranked on relevance, recency, and importance. 88 tests, local-first, self-hostable.`,
-    logo: "/icons/mnemo.svg",
     isExpanded: true,
   },
   {
