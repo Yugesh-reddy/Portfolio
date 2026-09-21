@@ -1,6 +1,11 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
+import {
+  GREETING_DURATION_MS,
+  GREETINGS,
+  IDENTITY_HOLD_MS,
+} from "../components/intro/intro-shared.ts"
 import * as introHelpers from "./home-intro-session.ts"
 import {
   getIntroScheduleMs,
@@ -83,14 +88,24 @@ describe("home intro storage", () => {
 })
 
 describe("getIntroScheduleMs", () => {
-  it("matches the reference greeting cadence", () => {
-    const schedule = getIntroScheduleMs(9, 180, 600)
-    assert.deepEqual(
-      schedule.greetingSwitchAtMs,
-      [180, 360, 540, 720, 900, 1080, 1260, 1440]
+  it("spaces greetings, identity, and the profile morph", () => {
+    const schedule = getIntroScheduleMs(5, 120, 420)
+    assert.deepEqual(schedule.greetingSwitchAtMs, [120, 240, 360, 480])
+    assert.equal(schedule.identityAtMs, 600)
+    assert.equal(schedule.profileAtMs, 1020)
+  })
+
+  it("uses the live greeting cadence", () => {
+    const schedule = getIntroScheduleMs(
+      GREETINGS.length,
+      GREETING_DURATION_MS,
+      IDENTITY_HOLD_MS
     )
-    assert.equal(schedule.identityAtMs, 1620)
-    assert.equal(schedule.profileAtMs, 2220)
+    assert.equal(schedule.identityAtMs, GREETINGS.length * GREETING_DURATION_MS)
+    assert.equal(
+      schedule.profileAtMs,
+      GREETINGS.length * GREETING_DURATION_MS + IDENTITY_HOLD_MS
+    )
   })
 })
 
