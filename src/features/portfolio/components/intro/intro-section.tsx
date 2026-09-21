@@ -14,9 +14,7 @@ import { IntroProfile } from "./intro-profile"
 let hasHomeIntroStarted = false
 
 export function IntroSection() {
-  const [introMode, setIntroMode] = useState<IntroMode>(
-    hasHomeIntroStarted ? "skip" : "pending"
-  )
+  const [introMode, setIntroMode] = useState<IntroMode>("skip")
 
   useLayoutEffect(() => {
     const storageValue = readHomeIntroStorage((key) =>
@@ -24,7 +22,13 @@ export function IntroSection() {
     )
     hasHomeIntroStarted ||= storageValue === "true"
 
-    if (resolveHomeIntroMode(hasHomeIntroStarted, storageValue) === "skip") {
+    if (
+      resolveHomeIntroMode(
+        hasHomeIntroStarted,
+        storageValue,
+        performance.now()
+      ) === "skip"
+    ) {
       hasHomeIntroStarted = true
       setIntroMode("skip")
       return

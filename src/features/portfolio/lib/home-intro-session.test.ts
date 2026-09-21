@@ -12,6 +12,7 @@ import {
   HOME_INTRO_SESSION_KEY,
   readHomeIntroStorage,
   resolveHomeIntroMode,
+  SLOW_INTRO_LOAD_MS,
   splitDisplayName,
   writeHomeIntroStorage,
 } from "./home-intro-session.ts"
@@ -54,6 +55,13 @@ describe("resolveHomeIntroMode", () => {
 
   it("skips when sessionStorage already recorded the intro", () => {
     assert.equal(resolveHomeIntroMode(false, "true"), "skip")
+  })
+
+  it("skips when the page has already been sitting there too long", () => {
+    assert.equal(
+      resolveHomeIntroMode(false, null, SLOW_INTRO_LOAD_MS + 1),
+      "skip"
+    )
   })
 })
 

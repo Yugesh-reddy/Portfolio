@@ -10,11 +10,19 @@ type ElementRect = {
   height: number
 }
 
+/** If hydration already took this long, skip the splash instead of covering a loaded page. */
+export const SLOW_INTRO_LOAD_MS = 350
+
 export function resolveHomeIntroMode(
   hasStartedInMemory: boolean,
-  storageValue: string | null
+  storageValue: string | null,
+  loadElapsedMs = 0
 ): "skip" | "play" {
   if (hasStartedInMemory || storageValue === "true") {
+    return "skip"
+  }
+
+  if (loadElapsedMs > SLOW_INTRO_LOAD_MS) {
     return "skip"
   }
 

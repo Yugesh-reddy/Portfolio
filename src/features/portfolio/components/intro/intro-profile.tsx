@@ -189,14 +189,6 @@ export function IntroProfile({ mode }: { mode: IntroMode }) {
 
   return (
     <div>
-      {mode === "pending" ? (
-        <div
-          data-intro-pending=""
-          aria-hidden="true"
-          className="pointer-events-auto fixed -inset-1 z-[62] touch-none bg-background"
-        />
-      ) : null}
-
       {shouldPlayIntro && phase !== "morphing" ? (
         <img
           src={USER.avatar}
