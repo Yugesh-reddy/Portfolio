@@ -52,7 +52,22 @@ export const YUGESH_KNOWLEDGE = `
 
 ## Featured Projects
 
-1. **MediCS: Red-Teaming and Defending a Medical LLM** (Feb 2026 - May 2026)
+1. **Mnemo: One Shared, Versioned Memory for Coding Agents** (Jun 2026 - present)
+   - Link: https://github.com/Yugesh-reddy/Mnemo
+   - Skills: Python, Postgres + pgvector, MCP server, event sourcing, Claude Code + Codex, agent evaluation.
+   - IMPORTANT: the 90.9% precision figure comes from an 18-turn scripted regression of the original extraction pipeline, which is now parked. Never present it as Mnemo's headline result or as real-conversation accuracy. The current headline is the coding-agent eval (4 of 10 baseline, 10 of 10 with the memory policy), and it is single runs on small throwaway repositories, not a reliability rate.
+   - What it is: one local memory that Claude Code, Codex and other MCP clients share. Memories are scoped to the git repository the agent is working in (plus a global scope), every change is attributed to the agent that made it, and every revision is kept and can be undone. Everything runs locally: Postgres, Ollama embeddings, no telemetry.
+   - Origin: it began as a write-time quality gate. Agent memory stores mostly junk (Mem0 issue #4573: 97.8% of 10,134 entries were noise) and turns negations and hypotheticals into false facts, so the first Mnemo extracted facts from conversations and ran each through NLI verification, dedup, salience scoring, tiering and Ebbinghaus decay. On an 18-turn scripted regression it beat a naive baseline: precision 60% to 90.9%, recall 90% to 100%, zero false memories.
+   - What real data showed: over eleven measured cycles against frozen protocols, with held-out data never used for tuning, small local extractors reached 1.41% strict precision and 2.41% recall on a 200-turn conversation and matched 0 of 9 must-keep facts on an external holdout. A stronger hosted extractor raised complete extraction from 16/23 to 20/23 with zero unsupported writes, but storing one value per subject and predicate overwrote four correct facts, so retrieval tied the baseline. He wrote up each failed rule instead of tuning around it.
+   - The pivot: a coding agent already knows what mattered in its own session, so he parked the extraction pipeline (still tested and documented, not deleted) and made the primary path six guarded MCP tools: memory_create, memory_get, memory_search, memory_update, memory_history and memory_revert. A source-level survey of Mem0, Cognee and Timescale's Memory Engine showed history and undo already exist elsewhere, so he dropped "only Mnemo can undo" as a claim and focused on guarantees.
+   - Guarantees: append-only events with Postgres triggers that reject edits to event payloads; updates must name the revision they read, so stale and racing writes are rejected (including A to B to A); event, HEAD and idempotency receipt commit in one transaction, so retries replay instead of applying twice, even across restarts; revert copies an old value into a new revision without raising its trust; reads separate when a fact was recorded from when it was true.
+   - Sharing: a live test found Codex could not see what Claude Code had saved, because reads were filtered by agent ID, and giving both one ID recorded Codex's edits as Claude's. He split the writer from the scope: each agent writes under its own name, and memory lives in a project scope keyed by the normalized git remote (SSH and HTTPS clones share it) plus a global scope.
+   - Coding-agent eval: ten scenarios, written before any run, drive 23 real Claude Code and Codex CLI sessions in throwaway repositories with prompts that never mention memory (cross-agent conventions, handoffs, corrections, project isolation, retractions, small talk that should not be stored). The baseline passed 4 of 10 because Codex never saved anything, replying "I'll remember that" without calling a tool. New tool text alone left Codex at 0 of 2 saves; a short memory policy in its instructions got 2 of 2. With the policy and optional request IDs, both agents passed 10 of 10 with zero tool errors, again with Claude Code's own auto-memory on, and again against the tool installed from GitHub.
+   - Host-agent pilot: when Qwen and Azure Luna drove the tools, Luna answered an ambiguous "undo that" by reverting both memories instead of asking. Revision guards stop stale and racing writes but cannot judge intent; what they guarantee is that an unwanted change is attributed, visible in history and undoable with one guarded revert.
+   - Install: uv tool install from GitHub, then mnemo up and mnemo install. The installer checks Postgres and Ollama first, shows every config change before making it, and mnemo uninstall removes exactly what it added. Postgres listens on localhost only, and a missing dependency returns an error naming the command that fixes it. Web UI for search, history and revert; export/import that verifies its own round trip; 450+ tests; 11 SQL migrations. Tested on macOS so far.
+   - Next: harder evals (real repositories, long sessions, repeated runs reported as rates), then more of the git layer: grouped undo, undoing a creation, and branching and merging memory. Automatic extraction stays parked unless the eval shows coding agents need it.
+
+2. **MediCS: Red-Teaming and Defending a Medical LLM** (Feb 2026 - May 2026)
    - Link: https://github.com/Yugesh-reddy/MediCS-Red-Teaming
    - Skills: PyTorch, Llama 3 / QLoRA, TRL (SFT + DPO), PEFT, Red Teaming, Statistical Evaluation.
    - Premise: safety alignment holds in English and leaks when a prompt switches languages mid-sentence.
@@ -62,17 +77,6 @@ export const YUGESH_KNOWLEDGE = `
    - Negative result he published: stacking DPO on top of the SFT checkpoint regressed safety back to 21.5%. DPO exists to correct over-refusal caused by safety training; when there is no over-refusal to correct, it eats the safety margin.
    - Dataset: MediCS-500, 500 expert-curated harmful seeds plus 500 benign twins, code-switched into 6 languages with back-translation verification, so susceptibility and over-refusal are measured together.
    - Evaluation: 3 checkpoints x 3 seeds x 1,599 held-out attacks, GPT-5 judge at temperature 0, McNemar with Holm-Bonferroni across languages, Cohen's h, residual-failure breakdown, cross-architecture transfer, and a fairness audit treating language as the protected attribute. 213 tests.
-
-2. **Mnemo: Agent Memory With a Write-Time Quality Gate** (Jun 2026 - Jul 2026)
-   - Not published publicly yet, so there is no link to give out. Do not invent one.
-   - Skills: Python, Postgres + pgvector, event sourcing, MCP server, FastAPI, Ollama.
-   - Problem: agent memory stores mostly junk and invents false facts from negations and hypotheticals. Mem0 issue #4573 is the public example, where 97.8% of 10,134 entries were noise.
-   - Approach: a write-path gate (extract, verify, dedup, score, tier, decay) on top of an append-only bitemporal Postgres store. Negations and hypotheticals are rejected before they become memories; borderline facts are demoted to a session tier instead of guessed at, so recall is protected.
-   - Result, naive vs gated on the same conversation and extractor: precision 60% to 90%, F1 75% to 94.7%, false memories 2 to 0, recall held at 100%.
-   - Reproducible: make eval runs with a deterministic embedder, no model, no network, no API key.
-   - Reversibility: an immutable event log is the source of truth and current state is a SQL view of HEAD. blame gives provenance and the reason for any belief, revert rolls a fact back, invalidate retires it bitemporally, diff shows belief changes over time. Nothing is overwritten.
-   - Forgetting: Ebbinghaus decay (R = e^(-t/S)), recall reinforces, faded facts archived via an appended event rather than deleted.
-   - Surface: MCP server with 8 tools, Python SDK, web UI for audit and revert, hybrid FTS + vector retrieval reranked on relevance/recency/importance. 88 tests, local-first and self-hostable.
 
 3. **AdaTTT: Deciding When a Vision-Language Model Should Adapt** (Mar 2026 - Jul 2026)
    - Link: https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training
