@@ -42,6 +42,8 @@ learn and improve rather than relying on static guardrails.
 
 ## Selected Projects
 
+- Mnemo — One Shared, Versioned Memory for Coding Agents:
+  https://github.com/Yugesh-reddy/Mnemo
 - MediCS — Adversarial Robustness for Medical LLMs:
   https://github.com/Yugesh-reddy/MediCS-Red-Teaming
 - Custos — Adaptive Immune Defense for Multi-Agent LLM Networks:

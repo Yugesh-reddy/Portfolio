@@ -30,7 +30,7 @@ export const USER: User = {
   about: `
 I'm an AI Engineer focused on LLM safety, evaluation, and inference. I completed my MS in Computer Science at UIC in May 2026. I care about what makes a model ready for real users: reliability, cost, and answers grounded in evidence.
 
-At UI Health, I built a clinical RAG system over patient records that answers over WhatsApp at 1.2s median latency, with a 60% reduction in response failures. My projects explore the same questions through medical LLM red teaming with [MediCS](https://github.com/Yugesh-reddy/MediCS-Red-Teaming), agent memory quality with Mnemo, and adaptive inference with [AdaTTT](https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training).
+At UI Health, I built a clinical RAG system over patient records that answers over WhatsApp at 1.2s median latency, with a 60% reduction in response failures. My projects explore the same questions through medical LLM red teaming with [MediCS](https://github.com/Yugesh-reddy/MediCS-Red-Teaming), shared memory for coding agents with [Mnemo](https://github.com/Yugesh-reddy/Mnemo), and adaptive inference with [AdaTTT](https://github.com/Yugesh-reddy/AdaTTT-Adaptive-Test-Time-Training).
 
 I build with strong baselines, confidence intervals, and ablations, and I document the results even when they challenge my approach. Red teaming taught me to trust a system only after a serious attempt to break it.
 `,
