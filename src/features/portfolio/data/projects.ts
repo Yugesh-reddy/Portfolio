@@ -78,7 +78,7 @@ export const PROJECTS: Project[] = [
   {
     id: "melanoma-tissue-volumes",
     title: "Melanoma Tissue Volumes: 3D Pathology and a Grounded AI Agent",
-    period: { start: "12.2025", end: "06.2026" },
+    period: { start: "11.2025", end: "02.2026" },
     link: "https://github.com/Yugesh-reddy/Melanoma-Tissue-Volumes",
     skills: [
       "React",
@@ -128,7 +128,7 @@ The engineering was sound. The hypothesis was not, and a negative result you can
   {
     id: "llm-reasoning-factuality",
     title: "LLM Reasoning & Factuality: What Actually Helps, and Where",
-    period: { start: "09.2025" },
+    period: { start: "04.2025", end: "05.2025" },
     link: "https://github.com/Yugesh-reddy/LLM-Reasoning-and-Factuality",
     skills: [
       "Python",

@@ -90,7 +90,7 @@ export const YUGESH_KNOWLEDGE = `
    - Engineering: pre-registered selection and stop rules, an evaluation split sealed until each method was frozen in git, deployment-accurate FLOP accounting, preemption-safe Colab A100 orchestration tested across 18 simulated failure scenarios, 280 tests in CI, an answer-or-abstain demo, and a release whose artifacts rebuild every number and figure byte-for-byte on a CPU.
    - Context: built for CS 518 (Deep Learning for Computer Vision, UIC) with Aishwarya Reddy Chinthalapudi and Aryan Shetty, and developed further since.
 
-4. **Melanoma Tissue Volumes: 3D Pathology and a Grounded AI Agent** (Dec 2025 - Jun 2026)
+4. **Melanoma Tissue Volumes: 3D Pathology and a Grounded AI Agent** (Nov 2025 - Feb 2026)
    - Link: https://github.com/Yugesh-reddy/Melanoma-Tissue-Volumes
    - Skills: React, Three.js / WebGL, GLSL, D3.js, LLM tool use, CyCIF.
    - What it is: a browser application that renders a 70-channel melanoma biopsy as an interactive 3D point cloud, computes a deterministic pathology analysis of any region the user draws, and layers an AI assistant that explains findings and can operate the app.
@@ -110,7 +110,7 @@ export const YUGESH_KNOWLEDGE = `
    - Discipline: docs/EVAL_CONTRACT.md pre-registered the model ladder, one-sided McNemar for accuracy, a 3pp non-inferiority margin, and a 25% cost floor. Amendments landed before any code change or further paid spend. The README shipped with no headline number because nothing passed the contract.
    - What survives: the serving tier is real. OpenAI wire protocol with streaming, per-key budget caps returning HTTP 402, X-Gambit-* decision headers, an offline replay store for free policy re-sweeps, fail-closed handling of truncated and empty provider responses, 320+ tests.
 
-6. **LLM Reasoning & Factuality: What Actually Helps, and Where** (Sept 2025)
+6. **LLM Reasoning & Factuality: What Actually Helps, and Where** (Apr 2025 - May 2025)
    - Link: https://github.com/Yugesh-reddy/LLM-Reasoning-and-Factuality
    - Skills: Python, self-consistency, ReAct, RAG, Ollama, Streamlit.
    - Three inference-time techniques implemented from scratch and run on the same tasks across local Ollama models and hosted APIs.
