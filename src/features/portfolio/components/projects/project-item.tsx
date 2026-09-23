@@ -20,6 +20,7 @@ import {
 import { Markdown } from "@/components/markdown"
 
 import type { Project } from "../../types/projects"
+import styles from "./project-item.module.css"
 
 export function ProjectItem({
   className,
@@ -31,10 +32,19 @@ export function ProjectItem({
   const { start, end } = project.period
   const isOngoing = !end
   const isSinglePeriod = end === start
+  const isStopped = project.status === "stopped"
 
   return (
-    <Collapsible className={className} defaultOpen={project.isExpanded}>
-      <div className="flex items-center transition-colors duration-200 ease-out hover:bg-accent-muted">
+    <Collapsible
+      className={cn(className, isStopped && styles.stopped)}
+      defaultOpen={project.isExpanded}
+    >
+      <div
+        className={cn(
+          "flex items-center transition-colors duration-200 ease-out",
+          isStopped ? "hover:bg-foreground/3" : "hover:bg-accent-muted"
+        )}
+      >
         {project.logo ? (
           <Image
             src={project.logo}
@@ -44,7 +54,8 @@ export function ProjectItem({
             quality={100}
             className={cn(
               "mx-4 flex size-8 shrink-0 select-none dark:invert",
-              project.id === "mnemo" && "scale-125"
+              project.id === "mnemo" && "scale-125",
+              isStopped && "opacity-60 grayscale"
             )}
             unoptimized
             aria-hidden
@@ -58,9 +69,16 @@ export function ProjectItem({
         <div className="flex-1 border-l border-dashed border-line">
           <CollapsibleTrigger className="flex w-full items-center gap-2 p-4 pr-2 text-left">
             <div className="flex-1">
-              <h3 className="mb-1 leading-snug font-medium text-balance">
-                {project.title}
-              </h3>
+              <div className="mb-1 flex items-start gap-2">
+                <h3 className="min-w-0 leading-snug font-medium text-balance">
+                  {project.title}
+                </h3>
+                {isStopped && (
+                  <span className="inline-flex shrink-0 rounded-sm border border-foreground/15 bg-background/80 px-1.5 py-0.5 font-mono text-[10px] leading-4 tracking-wider text-muted-foreground uppercase">
+                    Stopped
+                  </span>
+                )}
+              </div>
 
               <dl className="text-sm text-muted-foreground">
                 <dt className="sr-only">Period</dt>

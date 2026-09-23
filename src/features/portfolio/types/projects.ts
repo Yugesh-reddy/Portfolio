@@ -26,4 +26,6 @@ export type Project = {
   logo?: string
   /** Whether the project card is expanded by default in the UI. */
   isExpanded?: boolean
+  /** Marks a project that was ended after its hypothesis did not hold up. */
+  status?: "stopped"
 }

@@ -101,31 +101,6 @@ Course project for Visual Data Science at UIC.`,
     isExpanded: false,
   },
   {
-    id: "gambit",
-    title: "Gambit: A Model Router I Killed When the Evidence Did Not Hold",
-    period: { start: "07.2025", end: "08.2026" },
-    link: "https://github.com/Yugesh-reddy/Gambit",
-    skills: [
-      "Python",
-      "FastAPI",
-      "Calibration",
-      "Pre-Registered Evaluation",
-      "Azure AI Foundry",
-      "Docker",
-    ],
-    description: `A three-tier LLM router (local cheap, paid mid, paid frontier) built on the thesis that most queries do not need the best model you can afford. In simulation it looked excellent. On real benchmarks it did not hold, so I shut it down. This entry is the postmortem, not a pitch.
-
-- **What the thesis predicted.** A controlled mock with a tunable error-correlation knob showed the trained controller matching frontier accuracy at a large cost saving. That number was always labeled as simulated, and it is the reason the project ran as long as it did.
-- **What real models showed.** On a 498-query mixed battery (GSM8K, MMLU-Pro, SimpleQA, tokenizer-bound counting), the trained controller reached 0.596 accuracy against a frontier baseline of 0.768. Later policies closed the accuracy gap but missed the cost bar, or hit the cost bar only by under-escalating. No variant ever passed both.
-- **The kill switch, and why I built one first.** Stage 1 was a prompt-only complexity scorer. Its held-out *within-benchmark* AUC on GSM8K came out at 0.523, a coin flip, against a pre-registered ship gate of 0.65. Pooled AUC looked fine at 0.779, which is exactly the trap: it was separating datasets, not hard queries from easy ones. A band router, not a query-adaptive one. I stopped iterating rather than tune until something passed.
-- **The contract came before the result.** \`docs/EVAL_CONTRACT.md\` fixed the model ladder, the accuracy test (one-sided McNemar, not a hand-picked epsilon), a non-inferiority margin of 3pp, and a 25% cost floor, all pre-registered. Every amendment landed before any code change or further paid generation. The README shipped with no headline number because nothing passed the contract.
-- **What I would keep.** The serving tier is real: OpenAI wire protocol with streaming, per-key budget caps returning HTTP 402, \`X-Gambit-*\` decision headers, an offline replay store so any policy can be re-swept for free, fail-closed handling of truncated and empty provider responses, and 320+ tests.
-
-The engineering was sound. The hypothesis was not, and a negative result you can explain is worth more than a positive one you cannot defend.`,
-    logo: "/icons/gambit.svg",
-    isExpanded: false,
-  },
-  {
     id: "llm-reasoning-factuality",
     title: "LLM Reasoning & Factuality: What Actually Helps, and Where",
     period: { start: "04.2025", end: "05.2025" },
@@ -165,5 +140,31 @@ The engineering was sound. The hypothesis was not, and a negative result you can
 - Firebase auth and cloud sync so plans persist across devices, with recommendations that shift based on previous trips.`,
     logo: "/icons/fleet.svg",
     isExpanded: false,
+  },
+  {
+    id: "gambit",
+    title: "Gambit: A Model Router I Killed When the Evidence Did Not Hold",
+    period: { start: "07.2025", end: "08.2026" },
+    link: "https://github.com/Yugesh-reddy/Gambit",
+    skills: [
+      "Python",
+      "FastAPI",
+      "Calibration",
+      "Pre-Registered Evaluation",
+      "Azure AI Foundry",
+      "Docker",
+    ],
+    description: `A three-tier LLM router (local cheap, paid mid, paid frontier) built on the thesis that most queries do not need the best model you can afford. In simulation it looked excellent. On real benchmarks it did not hold, so I shut it down. This entry is the postmortem, not a pitch.
+
+- **What the thesis predicted.** A controlled mock with a tunable error-correlation knob showed the trained controller matching frontier accuracy at a large cost saving. That number was always labeled as simulated, and it is the reason the project ran as long as it did.
+- **What real models showed.** On a 498-query mixed battery (GSM8K, MMLU-Pro, SimpleQA, tokenizer-bound counting), the trained controller reached 0.596 accuracy against a frontier baseline of 0.768. Later policies closed the accuracy gap but missed the cost bar, or hit the cost bar only by under-escalating. No variant ever passed both.
+- **The kill switch, and why I built one first.** Stage 1 was a prompt-only complexity scorer. Its held-out *within-benchmark* AUC on GSM8K came out at 0.523, a coin flip, against a pre-registered ship gate of 0.65. Pooled AUC looked fine at 0.779, which is exactly the trap: it was separating datasets, not hard queries from easy ones. A band router, not a query-adaptive one. I stopped iterating rather than tune until something passed.
+- **The contract came before the result.** \`docs/EVAL_CONTRACT.md\` fixed the model ladder, the accuracy test (one-sided McNemar, not a hand-picked epsilon), a non-inferiority margin of 3pp, and a 25% cost floor, all pre-registered. Every amendment landed before any code change or further paid generation. The README shipped with no headline number because nothing passed the contract.
+- **What I would keep.** The serving tier is real: OpenAI wire protocol with streaming, per-key budget caps returning HTTP 402, \`X-Gambit-*\` decision headers, an offline replay store so any policy can be re-swept for free, fail-closed handling of truncated and empty provider responses, and 320+ tests.
+
+The engineering was sound. The hypothesis was not, and a negative result you can explain is worth more than a positive one you cannot defend.`,
+    logo: "/icons/gambit.svg",
+    isExpanded: false,
+    status: "stopped",
   },
 ]
