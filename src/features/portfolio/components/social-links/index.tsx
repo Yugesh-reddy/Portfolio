@@ -60,7 +60,7 @@ export function SocialLinks() {
                   }
                 />
                 <TooltipContent>
-                  {item.href ? item.title : `${item.title}: ${item.handle}`}
+                  {`${item.title} (${item.name === "x" || item.name === "youtube" ? "@" : ""}${item.handle})`}
                 </TooltipContent>
               </Tooltip>
             </li>

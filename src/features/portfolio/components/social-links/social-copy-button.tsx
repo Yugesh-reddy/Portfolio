@@ -8,17 +8,21 @@ export function SocialCopyButton({
   title,
   handle,
   children,
-}: {
-  className?: string
+  onClick,
+  ...props
+}: React.ComponentProps<"button"> & {
   title: string
   handle: string
-  children: React.ReactNode
 }) {
   return (
     <button
+      {...props}
       className={className}
       type="button"
-      onClick={async () => {
+      onClick={async (event) => {
+        onClick?.(event)
+        if (event.defaultPrevented) return
+
         const copied = await copyText(handle)
 
         if (copied) {
