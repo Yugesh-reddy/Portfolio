@@ -10,8 +10,8 @@ export const SOCIAL_LINKS: SocialLink[] = [
   {
     icon: "/icons/linkedin.svg",
     title: "LinkedIn",
-    subtitle: "yugesh-reddy-sappidi",
-    href: "https://www.linkedin.com/in/yugesh-reddy-sappidi",
+    subtitle: "ysapp",
+    href: "https://www.linkedin.com/in/ysapp",
   },
   {
     icon: "/icons/x.svg",
@@ -22,7 +22,7 @@ export const SOCIAL_LINKS: SocialLink[] = [
   {
     icon: "/icons/youtube.svg",
     title: "YouTube",
-    subtitle: "yugeshreddys9973",
-    href: "https://www.youtube.com/@yugeshreddys9973",
+    subtitle: "y-sapp",
+    href: "https://www.youtube.com/@y-sapp",
   },
 ]

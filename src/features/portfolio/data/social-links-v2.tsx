@@ -20,15 +20,15 @@ export const SOCIAL_LINKS: SocialLink[] = [
     name: "linkedin",
     icon: <Icons.linkedin />,
     title: "LinkedIn",
-    handle: "yugesh-reddy-sappidi",
-    href: "https://www.linkedin.com/in/yugesh-reddy-sappidi",
+    handle: "ysapp",
+    href: "https://www.linkedin.com/in/ysapp",
   },
   {
     name: "youtube",
     icon: <Icons.youtube />,
     title: "YouTube",
-    handle: "yugeshreddys9973",
-    href: "https://www.youtube.com/@yugeshreddys9973",
+    handle: "y-sapp",
+    href: "https://www.youtube.com/@y-sapp",
   },
   {
     // No `href`: Discord profile links resolve by numeric user ID, not by
