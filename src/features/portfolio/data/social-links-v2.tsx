@@ -3,11 +3,11 @@ import type { SocialLink } from "@/features/portfolio/types/social-links-v2"
 
 export const SOCIAL_LINKS: SocialLink[] = [
   {
-    name: "x",
-    icon: <Icons.x />,
-    title: "X",
-    handle: "Yugeshsapp",
-    href: "https://x.com/Yugeshsapp",
+    name: "linkedin",
+    icon: <Icons.linkedin />,
+    title: "LinkedIn",
+    handle: "ysapp",
+    href: "https://www.linkedin.com/in/ysapp",
   },
   {
     name: "github",
@@ -17,11 +17,11 @@ export const SOCIAL_LINKS: SocialLink[] = [
     href: "https://github.com/Yugesh-reddy",
   },
   {
-    name: "linkedin",
-    icon: <Icons.linkedin />,
-    title: "LinkedIn",
-    handle: "ysapp",
-    href: "https://www.linkedin.com/in/ysapp",
+    name: "x",
+    icon: <Icons.x />,
+    title: "X",
+    handle: "Yugeshsapp",
+    href: "https://x.com/Yugeshsapp",
   },
   {
     name: "youtube",
