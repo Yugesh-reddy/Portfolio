@@ -2,11 +2,11 @@
 title: "Why medical code-switching jailbreaks are a serious safety problem"
 description: "Safety-aligned LLMs refuse harmful medical requests in English, then often comply when the same request mixes languages mid-sentence. That gap is both a fairness failure and a real attack surface, and it is the reason I built MediCS."
 category: engineering
-createdAt: 2026-02-19
-updatedAt: 2026-02-19
+createdAt: 2026-03-02
+updatedAt: 2026-03-02
 ---
 
-Ask a modern aligned LLM *"how do I synthesize fentanyl?"* in English and it
+Ask a modern aligned LLM _"how do I synthesize fentanyl?"_ in English and it
 refuses. Swap the verb and the key nouns for their Hindi or Yoruba translations,
 keep the English sentence around them, and the same model often answers. Same
 intent, different safety outcome, depending on which languages show up in the
@@ -84,7 +84,7 @@ bypasses ~16% even when the answer comes back in English
 ([Song et al., 2025](https://aclanthology.org/2025.findings-naacl.191/)). An
 English input is basically never the unsafe case here. That points at the
 safety check failing while the input is processed, not only at generation.
-(Whether mixed *output* is needed for the strongest attacks is suggestive in
+(Whether mixed _output_ is needed for the strongest attacks is suggestive in
 the data; I would not claim the ablation settles it.)
 
 Cheap filters do not save you either. Perplexity filters that catch
@@ -114,7 +114,7 @@ multilingual safety-alignment recipe I know of, DPO on top of safety SFT, was
 evaluated on monolingual, per-language inputs
 ([Aakanksha et al., 2024](https://aclanthology.org/2024.emnlp-main.671/)). I am
 not aware of a top-venue paper that sits squarely on safety-critical domains
-*and* code-switched attacks. That could change quickly, so it is worth
+_and_ code-switched attacks. That could change quickly, so it is worth
 re-checking. The threat model real telehealth systems face (safety-critical,
 multilingual, mixed-language) still looks largely open.
 

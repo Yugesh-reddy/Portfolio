@@ -2,8 +2,8 @@
 title: "Why DPO sometimes makes safety worse: a cautionary result"
 description: "DPO is widely treated as the over-refusal-correction step that follows safety SFT. We layered it on a model that was already safe and helpful, and it regressed safety by 15 points. Here's the mechanism, and the rule it implies."
 category: engineering
-createdAt: 2026-06-24
-updatedAt: 2026-06-24
+createdAt: 2026-05-26
+updatedAt: 2026-05-26
 ---
 
 Direct Preference Optimization (DPO) has a near-canonical place in the alignment
@@ -25,21 +25,21 @@ The defense is a single-phase QLoRA supervised fine-tune of `Llama-3-8B-Instruct
 on red-team output. Under a black-box threat model, evaluated on a 533-prompt
 held-out pool over three seeds, SFT alone is a strong result:
 
-| Stage | Attack Success Rate | Helpfulness Retention | False-Refusal Rate |
-|---|---|---|---|
-| Base | 27.58% | 98.73% | 1.27% |
-| **SFT** | **6.38%** | **99.60%** | **0.40%** |
-| SFT + DPO | 21.45% | 98.87% | 1.13% |
+| Stage     | Attack Success Rate | Helpfulness Retention | False-Refusal Rate |
+| --------- | ------------------- | --------------------- | ------------------ |
+| Base      | 27.58%              | 98.73%                | 1.27%              |
+| **SFT**   | **6.38%**           | **99.60%**            | **0.40%**          |
+| SFT + DPO | 21.45%              | 98.87%                | 1.13%              |
 
 SFT cuts attack success by **−21.2 points** (paired bootstrap 95% CI
-[−23.5, −18.9], significant at *p* < 10⁻⁹ in every one of the six languages), and
-it does so while helpfulness *improves* and false refusals *drop*. The model
+[−23.5, −18.9], significant at _p_ < 10⁻⁹ in every one of the six languages), and
+it does so while helpfulness _improves_ and false refusals _drop_. The model
 becomes strictly safer **and** strictly more helpful.
 
 Then we layered DPO on that checkpoint, with preference pairs that preferred safe
 refusals over harmful responses on the attack pool, and helpful answers over
 refusals on the benign-twin pool. Attack success climbed from 6.38% back up to
-**21.5%**, a +15.07-point regression (Cohen's *h* = −0.45), undoing roughly
+**21.5%**, a +15.07-point regression (Cohen's _h_ = −0.45), undoing roughly
 three-quarters of the safety SFT had bought.
 
 ---
@@ -48,7 +48,7 @@ three-quarters of the safety SFT had bought.
 
 The conventional DPO-after-SFT recipe rests on a premise that is almost never
 stated out loud: **SFT introduced over-refusal that DPO can push back against.**
-DPO's contrastive objective needs something to pull *toward* on the benign side.
+DPO's contrastive objective needs something to pull _toward_ on the benign side.
 If the model is already refusing benign queries too often, "prefer the helpful
 answer" has a clear target and a real gradient.
 
@@ -86,10 +86,10 @@ a contrastive signal**: for every preferred response there is a dispreferred one
 and the loss explicitly pushes away from the latter while pulling toward the
 former.
 
-When SFT *has* induced over-refusal, that contrastive signal is corrective.
+When SFT _has_ induced over-refusal, that contrastive signal is corrective.
 That is exactly why, in the general-domain literature, DPO
 ([Rafailov et al., 2023](https://arxiv.org/abs/2305.18290)) applied over an SFT
-checkpoint reduces harm by ~55% *and* improves utility, while DPO that skips the
+checkpoint reduces harm by ~55% _and_ improves utility, while DPO that skips the
 SFT step barely moves utility at all ([Aakanksha et al., 2024](https://aclanthology.org/2024.emnlp-main.671/)).
 The SFT checkpoint isn't just a warm start;
 it seeds the very distribution DPO refines, including the over-refusal that gives
