@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
 
+import { formatDate } from "@/lib/format-date"
 import { getAllDocs } from "@/features/doc/data/documents"
 
 export const revalidate = false
@@ -33,7 +33,7 @@ ${doc.metadata.description}
 
 ${doc.content}
 
-Last updated on ${format(new Date(doc.metadata.updatedAt), "MMMM d, yyyy")}
+Last updated on ${formatDate(doc.metadata.updatedAt)}
 `
 
   return new Response(markdown, {
