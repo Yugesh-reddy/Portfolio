@@ -1,6 +1,6 @@
-import { format } from "date-fns"
 import { ArrowUpRightIcon, CircleCheckBigIcon } from "lucide-react"
 
+import { formatDate } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { getIcon } from "@/components/icons"
@@ -44,7 +44,7 @@ export function CertificationItem({
             }}
           />
         ) : (
-          getIcon(certification.issuerIconName) ?? <CircleCheckBigIcon />
+          (getIcon(certification.issuerIconName) ?? <CircleCheckBigIcon />)
         )}
       </div>
 
@@ -74,7 +74,7 @@ export function CertificationItem({
             <dt className="sr-only">Issued on</dt>
             <dd>
               <time dateTime={new Date(certification.issueDate).toISOString()}>
-                {format(new Date(certification.issueDate), "dd.MM.yyyy")}
+                {formatDate(certification.issueDate)}
               </time>
             </dd>
           </div>
@@ -82,7 +82,7 @@ export function CertificationItem({
       </div>
 
       {certification.credentialURL && (
-        <ArrowUpRightIcon className="size-4 text-muted-foreground transition-[transform,color] duration-200 ease-out group-hover/cert:-translate-y-0.5 group-hover/cert:translate-x-0.5 group-hover/cert:text-foreground" />
+        <ArrowUpRightIcon className="size-4 text-muted-foreground transition-[transform,color] duration-200 ease-out group-hover/cert:translate-x-0.5 group-hover/cert:-translate-y-0.5 group-hover/cert:text-foreground" />
       )}
     </div>
   )

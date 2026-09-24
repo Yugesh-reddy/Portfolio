@@ -1,8 +1,9 @@
 import type { ImageProps } from "next/image"
 import Image from "next/image"
 import Link from "next/link"
-import { differenceInCalendarDays, format, max } from "date-fns"
+import { differenceInCalendarDays, max } from "date-fns"
 
+import { formatDate } from "@/lib/format-date"
 import type { Doc } from "@/features/doc/types/document"
 
 /** Posts created or updated within this many days show the active "new" dot. */
@@ -64,7 +65,7 @@ export function PostItem({
           <dt className="sr-only">Published on</dt>
           <dd className="text-sm text-muted-foreground">
             <time dateTime={new Date(post.metadata.createdAt).toISOString()}>
-              {format(new Date(post.metadata.createdAt), "dd.MM.yyyy")}
+              {formatDate(post.metadata.createdAt)}
             </time>
           </dd>
         </dl>

@@ -1,8 +1,8 @@
 import { addQueryParams } from "@/utils/url"
-import { format } from "date-fns"
 import { ArrowUpRightIcon, BookmarkIcon } from "lucide-react"
 
 import { UTM_PARAMS } from "@/config/site"
+import { formatDate } from "@/lib/format-date"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import type { Bookmark } from "@/features/portfolio/types/bookmarks"
@@ -62,14 +62,14 @@ export function BookmarkItem({
             <dt className="sr-only">Bookmarked on</dt>
             <dd>
               <time dateTime={new Date(bookmark.bookmarkedAt).toISOString()}>
-                {format(new Date(bookmark.bookmarkedAt), "dd.MM.yyyy")}
+                {formatDate(bookmark.bookmarkedAt)}
               </time>
             </dd>
           </div>
         </dl>
       </div>
 
-      <ArrowUpRightIcon className="size-4 text-muted-foreground transition-[transform,color] duration-200 ease-out group-hover/bookmark:-translate-y-0.5 group-hover/bookmark:translate-x-0.5 group-hover/bookmark:text-foreground" />
+      <ArrowUpRightIcon className="size-4 text-muted-foreground transition-[transform,color] duration-200 ease-out group-hover/bookmark:translate-x-0.5 group-hover/bookmark:-translate-y-0.5 group-hover/bookmark:text-foreground" />
     </div>
   )
 }
