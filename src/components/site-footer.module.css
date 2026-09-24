@@ -21,6 +21,9 @@
   display: block;
   width: 100%;
   height: auto;
+  /* Trim the empty top area while keeping the original bottom crop.
+     37.5% of the SVG's 392 / 2000 aspect ratio is 7.35% of its width. */
+  margin-top: -7.35%;
   transform: translateY(37.5%);
 }
 .letterOutlines {
