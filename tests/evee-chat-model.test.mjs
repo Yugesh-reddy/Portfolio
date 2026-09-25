@@ -6,8 +6,8 @@ import {
   EVEE_MODEL,
 } from "../src/features/evee/lib/chat-model.ts"
 
-test("uses the deployment-proven low-latency Gemini configuration", () => {
-  assert.equal(EVEE_MODEL, "gemini-2.5-flash")
-  assert.equal(EVEE_GENERATION_CONFIG.thinkingConfig.thinkingBudget, 0)
+test("uses stable Gemini Flash-Lite with minimal thinking", () => {
+  assert.equal(EVEE_MODEL, "gemini-3.5-flash-lite")
+  assert.equal(EVEE_GENERATION_CONFIG.thinkingConfig.thinkingLevel, "MINIMAL")
   assert.equal(EVEE_GENERATION_CONFIG.maxOutputTokens, 500)
 })
