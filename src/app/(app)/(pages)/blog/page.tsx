@@ -38,7 +38,7 @@ export default function Page() {
   const allPosts = getAllDocs()
 
   return (
-    <div className="min-h-svh">
+    <div className="screen-line-bottom min-h-svh">
       <PageHeading>
         <PageHeadingTagline>Blog</PageHeadingTagline>
         <PageHeadingTitle>

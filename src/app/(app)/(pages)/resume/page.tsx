@@ -41,10 +41,10 @@ export const metadata: Metadata = {
 
 export default function ResumePage() {
   return (
-    <div className="min-h-svh">
+    <div className="screen-line-bottom min-h-svh">
       <PageHeading>
         <PageHeadingTagline>Resume</PageHeadingTagline>
-        <PageHeadingTitle>The short version, on one page.</PageHeadingTitle>
+        <PageHeadingTitle>From ideas to impact.</PageHeadingTitle>
         <PageHeadingDescription>
           Experience, projects, and education as a PDF. Read it below or take a
           copy with you.
