@@ -9,7 +9,7 @@ import { SOCIAL_LINKS } from "@/features/portfolio/data/social-links"
 import { dependencies, devDependencies } from "../../../../package.json"
 
 const inspirations = [
-  { name: "Chanh Dai", href: "https://chanhdai.com" },
+  { name: "Chanh Dai" },
   { name: "Emil Kowalski", href: "https://emilkowal.ski" },
   { name: "Rauno Freiberg", href: "https://rauno.me" },
   { name: "shadcn/ui", href: "https://ui.shadcn.com" },
@@ -117,14 +117,18 @@ export function AboutThisSite() {
                 <span aria-hidden className="font-mono text-muted-foreground">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  {name}
-                </a>
+                {href ? (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                  >
+                    {name}
+                  </a>
+                ) : (
+                  <span>{name}</span>
+                )}
               </li>
             ))}
           </ol>
