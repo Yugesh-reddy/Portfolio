@@ -37,14 +37,13 @@ export function SiteHeader() {
 
         <div className="flex-1" />
 
-        <NavDesktop items={MAIN_NAV} />
+        {/* Temporarily hide Resume in the top navigation. */}
+        <NavDesktop
+          items={MAIN_NAV.filter((item) => item.href !== "/resume")}
+        />
 
         <div className="flex items-center max-sm:*:data-[slot=command-menu-trigger]:hidden">
-          <Separator
-            orientation="vertical"
-            className="mr-2 max-sm:hidden data-vertical:h-4 data-vertical:self-center"
-          />
-          <CommandMenu docs={docPreviews} enabledHotkeys />
+          <CommandMenu docs={docPreviews} enabledHotkeys showEveeTrigger />
           <Separator
             orientation="vertical"
             className="mx-2 max-sm:hidden data-vertical:h-4 data-vertical:self-center"

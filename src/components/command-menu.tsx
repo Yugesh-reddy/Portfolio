@@ -46,6 +46,7 @@ import { Icons } from "./icons"
 import { PixelMark } from "./pixel-mark"
 import { Button } from "./ui/button"
 import { Kbd, KbdGroup } from "./ui/kbd"
+import { Separator } from "./ui/separator"
 
 type CommandKind = "command" | "page" | "link" | "ai"
 
@@ -152,9 +153,11 @@ const OTHER_LINK_ITEMS: CommandLinkItem[] = [
 export function CommandMenu({
   docs,
   enabledHotkeys = false,
+  showEveeTrigger = false,
 }: {
   docs: DocPreview[]
   enabledHotkeys?: boolean
+  showEveeTrigger?: boolean
 }) {
   const router = useRouter()
 
@@ -296,6 +299,25 @@ export function CommandMenu({
 
   return (
     <>
+      {showEveeTrigger && (
+        <>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            className="relative mr-4 cursor-pointer text-sm font-medium text-muted-foreground transition-colors after:absolute after:-inset-2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+            onClick={() => {
+              setOpen(true)
+              startEveeChat()
+            }}
+          >
+            Evee
+          </button>
+          <Separator
+            orientation="vertical"
+            className="mr-2 max-sm:hidden data-vertical:h-4 data-vertical:self-center"
+          />
+        </>
+      )}
       <CommandMenuTrigger
         onClick={() => {
           setOpen(true)
