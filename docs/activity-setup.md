@@ -31,6 +31,8 @@ Required variables:
 - `UPSTASH_REDIS_REST_URL` (HTTPS)
 - `UPSTASH_REDIS_REST_TOKEN`
 
+Connecting Upstash for Redis through the Vercel Marketplace sets `KV_REST_API_URL` and `KV_REST_API_TOKEN` instead; the receiver reads those when the `UPSTASH_` names are absent. Use the write-capable token, not `KV_REST_API_READ_ONLY_TOKEN`.
+
 Restart the dev server after environment changes. Deploy the configured website to obtain an HTTPS endpoint your phone can reach. Localhost on your phone refers to the phone itself. Use the final canonical domain to avoid redirects.
 
 Opening `/api/activity` should return `{"status":"empty"}` before the first sync. `unconfigured` means configuration is missing; `unavailable` indicates a storage error. This implementation has not created cloud resources or deployed the site.
