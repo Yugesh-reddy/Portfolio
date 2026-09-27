@@ -1,0 +1,75 @@
+/* A paper ticket. Masks carve the notches at the perforation, the chained
+   drop-shadows draw a 1px outline that follows them, and the stub tears
+   away along the perforation on hover. */
+.ticket {
+  --notch: 7px;
+  display: flex;
+  flex-direction: column;
+  filter: drop-shadow(1px 0 0 var(--border)) drop-shadow(-1px 0 0 var(--border))
+    drop-shadow(0 1px 0 var(--border)) drop-shadow(0 -1px 0 var(--border));
+}
+
+.admission,
+.stub {
+  background: var(--paper);
+  mask:
+    radial-gradient(
+        circle at 0 var(--edge),
+        transparent var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      left / 51% 100% no-repeat,
+    radial-gradient(
+        circle at 100% var(--edge),
+        transparent var(--notch),
+        #000 calc(var(--notch) + 0.5px)
+      )
+      right / 51% 100% no-repeat;
+}
+
+.admission {
+  --edge: 100%;
+  border-radius: 10px 10px 0 0;
+}
+
+.stub {
+  --edge: 0%;
+  position: relative;
+  border-radius: 0 0 10px 10px;
+  transform-origin: 0 0;
+  transition:
+    rotate 500ms var(--expo-out),
+    translate 500ms var(--expo-out);
+}
+
+.perforation {
+  position: absolute;
+  top: 0;
+  right: calc(var(--notch) + 4px);
+  left: calc(var(--notch) + 4px);
+  border-top: 1px dashed var(--border);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(.group):hover .stub {
+    rotate: 3deg;
+    translate: 0 2px;
+  }
+}
+
+:global(.group):focus-visible .stub {
+  rotate: 3deg;
+  translate: 0 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stub {
+    transition: none;
+  }
+
+  :global(.group):hover .stub,
+  :global(.group):focus-visible .stub {
+    rotate: none;
+    translate: none;
+  }
+}

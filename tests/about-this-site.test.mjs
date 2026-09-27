@@ -21,6 +21,8 @@ test("the homepage renders the standalone About this site footer", async (t) => 
   assert.match(html, />Stack</)
   assert.match(html, />Inspired by</)
   assert.match(html, /aria-label="Footer social links"/)
+  assert.equal(html.match(/>Deployed on</g)?.length, 1)
+  assert.equal(html.match(/aria-label="Footer social links"/g)?.length, 1)
 })
 
 async function startSite(t) {

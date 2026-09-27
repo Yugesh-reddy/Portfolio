@@ -18,6 +18,7 @@ const fontSerif = localFont({
 
 const fontHandwritten = Caveat({
   weight: ["400", "500"],
+  subsets: ["latin"],
   display: "swap",
   // Distinct from the Tailwind theme token so `@theme` is not circular.
   variable: "--font-caveat",
