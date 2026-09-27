@@ -1,10 +1,10 @@
 # Apple Watch activity rings
 
-The website receiver and tile are implemented. A real iPhone sync and hosted Redis database still need to be connected. The browser cannot read Apple Health directly.
+The website receiver, tile and production Redis are connected, and the first iPhone sync ran on 2026-10-10. The browser cannot read Apple Health directly.
 
-The connection follows this path: **Apple Watch → Apple Health on iPhone → Scripting → `/api/activity` → Redis → the website rings**. The website reads the last uploaded snapshot once a minute while the tile is visible. This is periodic sync, not a continuous Watch stream.
+The connection follows this path: **Apple Watch → Apple Health on iPhone → Scripting → `/api/activity` → Redis → the website rings**. The website reads the last uploaded snapshot every 20 seconds while the tile is visible. This is periodic sync, not a continuous Watch stream.
 
-The redesigned tile uses three grayscale rings and matching Move, Exercise and Stand labels. Without a snapshot, it shows empty ring tracks and dashes rather than invented completion percentages. A connected snapshot fills the rings and displays its percentages and Chicago sync time; an old snapshot is labeled “Last activity.”
+The tile draws an Apple Watch lying on the shelf, its rings in grays until the card is hovered (see [After hours](off-the-clock-content.md)). Without a snapshot, it shows dotted ring tracks and dashes rather than invented completion percentages. A connected snapshot fills the rings and displays its percentages and Chicago sync time; an old snapshot is labeled “Last activity.”
 
 To finish connecting the existing implementation:
 
@@ -35,7 +35,7 @@ Connecting Upstash for Redis through the Vercel Marketplace sets `KV_REST_API_UR
 
 Restart the dev server after environment changes. Deploy the configured website to obtain an HTTPS endpoint your phone can reach. Localhost on your phone refers to the phone itself. Use the final canonical domain to avoid redirects.
 
-Opening `/api/activity` should return `{"status":"empty"}` before the first sync. `unconfigured` means configuration is missing; `unavailable` indicates a storage error. This implementation has not created cloud resources or deployed the site.
+Opening `/api/activity` should return `{"status":"empty"}` before the first sync. `unconfigured` means configuration is missing; `unavailable` indicates a storage error.
 
 ## 2. Connect the iPhone
 
@@ -45,13 +45,17 @@ This included sender uses the **Scripting** iPhone app. Its [Activity Summary AP
 2. Run it manually while the phone is unlocked and set to America/Chicago. The script stops in other timezones to avoid publishing one timezone's daily rings under another day's label.
 3. Enter your full `https://your-domain/api/activity` URL and sync token in the first-run prompts. The token is masked and stored in this script's [Keychain](https://scriptingapp.github.io/guide/Device%20Capabilities/Keychain), on this device only. It is never embedded in the source.
 4. Allow Activity Summary reading when iOS/Scripting asks. HealthKit may return no data if access is denied; the script then stops without sending invented zeroes.
-5. Check for “Activity rings synced.” Open the website and compare it with Fitness. The browser refreshes the visible tile every minute; the endpoint may cache a successful read for 30 seconds.
+5. Check for “Activity rings synced.” Open the website and compare it with Fitness. The browser refreshes the visible tile every 20 seconds; the endpoint may cache a successful read for 10 seconds, so a new sync shows within about 30 seconds.
 
 The sender uses Scripting's documented [fetch](https://scriptingapp.github.io/guide/Utilities/Request/fetch) API, stops redirects and times out after 15 seconds. It has been tested with mocked native APIs; real device permissions and background runs must be tested on your phone.
 
-## 3. Optional periodic updates
+## 3. Regular updates
 
-After a successful manual sync, create an iPhone Shortcuts personal automation that invokes this Scripting script at a few chosen times or after a workout, using the actions available in your installed app. This is periodic publishing, not a live Watch connection. iOS scheduling, lock state and Watch-to-Health delay can postpone updates. Do not rely on a strict refresh interval. Run manually if the site shows stale activity.
+Health can only be read while the phone is unlocked, so schedule-based automations mostly fail silently. Sync instead whenever the phone is in use: create a Shortcuts personal automation with the **App** trigger, choose Fitness plus the apps you open most often, select **Is Opened**, then **Run Immediately** with **Notify When Run** off. Its only action is Scripting's **Run Script** (not “Run Script in App”, which would switch apps) with this script.
+
+Every run reads Health, which is quick, but uploads only when a ring percentage changed, the day changed, or 15 minutes passed since the last upload. Ring changes therefore reach the website within seconds of opening an app, and the sync time stays fresh without an upload on every app switch. The last upload is remembered in the script's Keychain as the date, the three percentages and a timestamp.
+
+This is still periodic: while the phone stays locked, nothing syncs. Watch-to-Health delay can also hold back the newest minutes. Run the script manually if the site shows stale activity.
 
 ## Receiver contract
 
@@ -63,6 +67,6 @@ Responses: 200 accepted, 400 invalid data, 401 incorrect token, 409 newer snapsh
 
 ## Rotate or disconnect
 
-To rotate, replace the server sync token, then remove `portfolio.activity.token` from the same Scripting script's Keychain using `Keychain.remove("portfolio.activity.token")` and run again. To change endpoint, remove `portfolio.activity.endpoint` the same way. Keychain data is scoped to that script.
+To rotate, replace the server sync token and run the script twice: the first upload gets a 401, which makes the script forget the saved token, and the second run asks for the new one. A mistyped token recovers the same way. To change endpoint, run `Keychain.remove("portfolio.activity.endpoint")` in the same script, then run it again. Keychain data is scoped to that script.
 
-To disconnect, disable the phone automation and remove `ACTIVITY_SYNC_TOKEN` from the website environment, then redeploy/restart. The tile returns to its unconfigured state (allow up to 30 seconds for a previously cached GET). For immediate storage removal, delete `portfolio:activity:latest` in your Redis console. Otherwise it expires after seven days. Remove Health permission in iOS settings if you no longer want the app to read summaries.
+To disconnect, disable the phone automation and remove `ACTIVITY_SYNC_TOKEN` from the website environment, then redeploy/restart. The tile returns to its unconfigured state (allow up to 10 seconds for a previously cached GET). For immediate storage removal, delete `portfolio:activity:latest` in your Redis console. Otherwise it expires after seven days. Remove Health permission in iOS settings if you no longer want the app to read summaries.

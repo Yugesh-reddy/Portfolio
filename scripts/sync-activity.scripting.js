@@ -1,6 +1,13 @@
 // Run inside Scripting on iPhone, not Node. See docs/activity-setup.md.
 // These globals are supplied by Scripting's documented native APIs.
 /* global Keychain, Dialog, Health, HealthUnit, DateComponents */
+import { Script } from "scripting"
+
+// The script's own Keychain, on this device only.
+const options = {
+  accessibility: "first_unlock_this_device",
+  synchronizable: false,
+}
 
 async function syncActivity() {
   let endpoint = Keychain.get("portfolio.activity.endpoint")
@@ -36,10 +43,6 @@ async function syncActivity() {
     token = token.trim()
     if (token.length < 32)
       throw Error("The token must have at least 32 characters.")
-    const options = {
-      accessibility: "first_unlock_this_device",
-      synchronizable: false,
-    }
     if (
       !Keychain.set("portfolio.activity.endpoint", endpoint, options) ||
       !Keychain.set("portfolio.activity.token", token, options)
@@ -55,8 +58,8 @@ async function syncActivity() {
     month: "2-digit",
     day: "2-digit",
   }).format(now)
-  const localDate = (date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+  const dayOf = ({ year, month, day }) =>
+    `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
   if (
     new Intl.DateTimeFormat().resolvedOptions().timeZone !== "America/Chicago"
   ) {
@@ -64,22 +67,20 @@ async function syncActivity() {
       "This sender uses Chicago daily goals. Sync while your phone is set to America/Chicago."
     )
   }
-  const today = DateComponents.fromDate(now)
+  // A single-day query comes back empty on device, so read the past week and
+  // pick today; the listed days also tell missing access from a date mismatch.
   const summaries = await Health.queryActivitySummaries({
-    start: today,
-    end: today,
+    start: DateComponents.fromDate(new Date(now.getTime() - 6 * 86400000)),
+    end: DateComponents.fromDate(now),
   })
-  const summary = summaries.find(
-    (item) =>
-      item.dateComponents.date &&
-      localDate(item.dateComponents.date) === chicagoDate
-  )
+  const days = summaries.map((item) => dayOf(item.dateComponents))
+  const summary = summaries[days.indexOf(chicagoDate)]
   if (!summary)
     throw Error(
-      "No activity summary available today. Check Health access and Watch sync, then retry."
+      `No activity summary for ${chicagoDate}; Health returned ${days.length} recent days (${days.join(", ") || "none"}). Check Health access and Watch sync, then retry.`
     )
   const payload = {
-    date: localDate(summary.dateComponents.date),
+    date: chicagoDate,
     updatedAt: now.toISOString(),
     move: {
       value: summary.activeEnergyBurned(HealthUnit.kilocalorie()),
@@ -106,6 +107,20 @@ async function syncActivity() {
       )
     }
   }
+  // Shortcuts runs this on every app open, so skip uploads that would not
+  // change the tile. An unchanged quarter hour still refreshes the sync time.
+  const rings = [payload.move, payload.exercise, payload.stand]
+    .map(({ value, goal }) => Math.round((value / goal) * 100))
+    .join("/")
+  const last = JSON.parse(Keychain.get("portfolio.activity.last") || "{}")
+  if (
+    last.date === chicagoDate &&
+    last.rings === rings &&
+    now.getTime() - last.at < 15 * 60000
+  ) {
+    console.log("Rings unchanged since the last sync.")
+    return
+  }
   let response
   try {
     response = await fetch(endpoint, {
@@ -122,11 +137,21 @@ async function syncActivity() {
   } catch {
     throw Error("Could not reach the activity endpoint. Try again later.")
   }
+  // Forget a rejected token so the next run asks for it again.
+  if (response.status === 401) Keychain.remove("portfolio.activity.token")
   if (!response.ok)
     throw Error(
       `Activity upload failed (${response.status}). Check the setup guide.`
     )
+  Keychain.set(
+    "portfolio.activity.last",
+    JSON.stringify({ date: chicagoDate, rings, at: now.getTime() }),
+    options
+  )
   console.log("Activity rings synced.")
 }
 
-await syncActivity()
+// Scripting rejects top-level await, and scripts must end with Script.exit().
+syncActivity()
+  .catch((error) => console.error(String(error)))
+  .finally(() => Script.exit())
