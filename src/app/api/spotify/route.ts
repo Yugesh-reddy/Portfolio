@@ -1,4 +1,5 @@
 import { getNowPlaying } from "@/features/spotify/lib/now-playing"
+import { createSpotifyStore } from "@/features/spotify/lib/server"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -9,11 +10,15 @@ let pending: ReturnType<typeof getNowPlaying> | undefined
 
 export async function GET() {
   if (!cached || Date.now() >= expiresAt) {
-    pending ??= getNowPlaying({
-      clientId: process.env.SPOTIFY_CLIENT_ID,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-      refreshToken: process.env.SPOTIFY_REFRESH_TOKEN,
-    })
+    pending ??= getNowPlaying(
+      {
+        clientId: process.env.SPOTIFY_CLIENT_ID,
+        clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+        refreshToken: process.env.SPOTIFY_REFRESH_TOKEN,
+      },
+      fetch,
+      { store: createSpotifyStore() }
+    )
     cached = await pending
     expiresAt = Date.now() + 30_000
     pending = undefined
