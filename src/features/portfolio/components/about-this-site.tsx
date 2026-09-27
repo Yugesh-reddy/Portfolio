@@ -38,7 +38,7 @@ const linkClassName =
 export function AboutThisSite() {
   return (
     <>
-      <Separator className="screen-line-bottom" />
+      <Separator />
       <section
         aria-labelledby="about-this-site-title"
         className="screen-line-top screen-line-bottom border-x border-line"

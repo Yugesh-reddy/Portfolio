@@ -29,7 +29,8 @@ export function ProfileSummary() {
         <HandwrittenArrow className="mt-1 size-7 rotate-3" />
       </HandwrittenNote>
 
-      <div className="grid grid-cols-1 gap-px bg-line sm:grid-cols-6">
+      {/* The panel's own bottom rule sits behind the tiles, so draw it here. */}
+      <div className="grid grid-cols-1 gap-px border-b border-line bg-line sm:grid-cols-6">
         <SpotifyNowPlaying className="sm:col-span-3 md:col-span-4" />
         <ActivityTile className="sm:col-span-3 md:col-span-2" />
         <WatchingTile className="sm:col-span-2" />

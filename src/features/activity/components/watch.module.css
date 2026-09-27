@@ -1,0 +1,168 @@
+/* An Apple Watch lying on the shelf: a dark case on a sport band in the
+   Tag paper, like the ticket and the prints. At rest it sits askew with the
+   screen in always-on mode and the rings in grays. Hovering picks it up,
+   straightens it and wakes the screen to the real ring colors, the way the
+   other tiles reveal their artwork. */
+.watch {
+  --case-w: calc(var(--case) * 0.84);
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(var(--case-w) + 0.75rem);
+  height: calc(var(--case) * 1.6);
+  rotate: 6deg;
+  transition:
+    rotate 500ms var(--expo-out),
+    translate 500ms var(--expo-out);
+}
+
+/* One strap runs behind the case and fades out at both ends. */
+.band {
+  position: absolute;
+  inset-block: 0;
+  width: calc(var(--case-w) * 0.64);
+  border-inline: 1px solid var(--border);
+  background: var(--paper);
+  mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
+}
+
+/* Pin holes on the lower strap. */
+.band::after {
+  content: "";
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  width: 4px;
+  height: 22%;
+  translate: -50% 0;
+  background: radial-gradient(circle, var(--border) 1.25px, transparent 1.75px)
+    center top / 4px 8px repeat-y;
+}
+
+.case {
+  position: relative;
+  width: var(--case-w);
+  height: var(--case);
+  padding: 7%;
+  border-radius: 26% / 22%;
+  background: linear-gradient(
+    150deg,
+    oklch(0.36 0.005 286),
+    oklch(0.21 0.004 286) 40%,
+    oklch(0.15 0.004 286)
+  );
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    0 1px 1px rgb(0 0 0 / 0.12),
+    0 6px 12px -6px rgb(0 0 0 / 0.45);
+  transition: box-shadow 500ms var(--expo-out);
+}
+
+/* Digital crown with its ridges, and the side button below it. */
+.case::before,
+.case::after {
+  content: "";
+  position: absolute;
+  left: calc(100% - 1px);
+  border-radius: 0 2px 2px 0;
+}
+
+.case::before {
+  top: 22%;
+  width: 5px;
+  height: 18%;
+  background: repeating-linear-gradient(
+    oklch(0.46 0.005 286) 0 1px,
+    oklch(0.24 0.004 286) 1px 2px
+  );
+}
+
+.case::after {
+  top: 50%;
+  width: 3px;
+  height: 22%;
+  background: oklch(0.26 0.004 286);
+}
+
+.screen {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  border-radius: 20% / 17%;
+  background: #000;
+}
+
+.rings {
+  width: 86%;
+  opacity: 0.72;
+  transition: opacity 240ms ease;
+}
+
+.stale .rings {
+  opacity: 0.45;
+}
+
+/* Grays at rest, ring colors once woken. */
+.track,
+.progress {
+  stroke: var(--gray);
+  transition: stroke 240ms ease;
+}
+
+.track {
+  opacity: 0.2;
+}
+
+.progress {
+  transition:
+    stroke 240ms ease,
+    stroke-dashoffset 1.2s var(--expo-out),
+    opacity 1.2s step-start;
+}
+
+/* The legend's dots follow the same rule as the rings. */
+.dot {
+  background: color-mix(in oklab, var(--foreground) var(--tone), transparent);
+  transition: background-color 240ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(.group):hover .watch {
+    rotate: 0deg;
+    translate: 0 -3px;
+  }
+
+  :global(.group):hover .case {
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.08),
+      0 1px 1px rgb(0 0 0 / 0.12),
+      0 12px 18px -8px rgb(0 0 0 / 0.5);
+  }
+
+  :global(.group):hover .rings {
+    opacity: 1;
+  }
+
+  :global(.group):hover .track,
+  :global(.group):hover .progress {
+    stroke: var(--hue);
+  }
+
+  :global(.group):hover .dot {
+    background: var(--hue);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .watch,
+  .case,
+  .progress {
+    transition: none;
+  }
+
+  :global(.group):hover .watch {
+    rotate: 6deg;
+    translate: none;
+  }
+}

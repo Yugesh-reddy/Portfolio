@@ -134,46 +134,46 @@ test("playback position is clamped to the actual track duration", async () => {
   assert.equal(result.progressMs, 180_000)
 })
 
-test("private sessions fall back to history without remembering the track", async () => {
+test("private sessions fall back to history", async () => {
+  const result = await query({
+    playback: Response.json({ ...track, device: { is_private_session: true } }),
+    recent: Response.json({ items: [recentItem] }),
+  })
+  assert.equal(result.status, "recent")
+  assert.equal(result.title, "Test song")
+})
+
+test("private sessions are never remembered", async () => {
   const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
   __resetSpotifyMemory()
-  const fetcher = async (url) => {
-    const target = String(url)
-    if (target.includes("api/token"))
-      return Response.json({ access_token: "access" })
-    if (target.includes("recently-played"))
-      return Response.json({ items: [recentItem] })
-    return Response.json({
-      ...track,
-      device: { is_private_session: true },
-    })
-  }
-  const first = await getNowPlaying(credentials, fetcher)
-  assert.equal(first.status, "recent")
-  assert.equal(first.title, "Test song")
-  // Quitting afterwards with empty history must stay idle: the private
-  // track was never remembered.
-  const second = await getNowPlaying(credentials, async (url) => {
-    const target = String(url)
-    if (target.includes("api/token"))
-      return Response.json({ access_token: "access" })
-    if (target.includes("recently-played")) return Response.json({ items: [] })
-    return new Response(null, { status: 204 })
+  let clock = Date.parse("2026-10-10T20:00:00Z")
+  const poll = (playback) =>
+    getNowPlaying(
+      credentials,
+      spotify(playback, Response.json({ items: [] })),
+      {
+        now: () => clock,
+      }
+    )
+  assert.deepEqual(
+    await poll(
+      Response.json({ ...track, device: { is_private_session: true } })
+    ),
+    { status: "idle" }
+  )
+  // Quitting afterwards must stay idle: the private track was never kept.
+  clock += 11 * 60_000
+  assert.deepEqual(await poll(new Response(null, { status: 204 })), {
+    status: "idle",
   })
-  assert.deepEqual(second, { status: "idle" })
 })
 
 test("a track seen playing survives quitting before history records it", async () => {
   const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
   __resetSpotifyMemory()
+  let clock = Date.parse("2026-10-10T20:00:00Z")
   const seen = async (playback, recent) =>
-    getNowPlaying(credentials, async (url) => {
-      const target = String(url)
-      if (target.includes("api/token"))
-        return Response.json({ access_token: "access" })
-      if (target.includes("recently-played")) return recent
-      return playback
-    })
+    getNowPlaying(credentials, spotify(playback, recent), { now: () => clock })
   const loser = {
     ...track,
     item: {
@@ -184,6 +184,7 @@ test("a track seen playing survives quitting before history records it", async (
   }
   assert.equal((await seen(Response.json(loser), null)).status, "playing")
   // App quit: player silent, history still stale — memory wins.
+  clock += 1000
   const quit = await seen(
     new Response(null, { status: 204 }),
     Response.json({
@@ -197,7 +198,8 @@ test("a track seen playing survives quitting before history records it", async (
   )
   assert.equal(quit.status, "recent")
   assert.equal(quit.title, "Loser")
-  // Newer history wins over older memory.
+  // Newer history wins over older memory once history is asked again.
+  clock += 10 * 60_000
   const newer = await seen(
     new Response(null, { status: 204 }),
     Response.json({
@@ -211,6 +213,138 @@ test("a track seen playing survives quitting before history records it", async (
   )
   assert.equal(newer.status, "recent")
   assert.equal(newer.title, "Test song")
+})
+
+/** A Spotify stand-in that counts calls per endpoint. */
+function spotify(playback, recent, calls = {}) {
+  return async (url) => {
+    const target = String(url)
+    const name = target.includes("api/token")
+      ? "token"
+      : target.includes("recently-played")
+        ? "history"
+        : "playing"
+    calls[name] = (calls[name] || 0) + 1
+    if (name === "token") return Response.json({ access_token: "access" })
+    const response = name === "history" ? recent : playback
+    return typeof response === "function" ? response() : response
+  }
+}
+
+test("history is asked at most every ten minutes", async () => {
+  const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
+  __resetSpotifyMemory()
+  let clock = Date.parse("2026-10-10T20:00:00Z")
+  const calls = {}
+  const fetcher = spotify(
+    () => new Response(null, { status: 204 }),
+    () => Response.json({ items: [recentItem] }),
+    calls
+  )
+  for (let poll = 0; poll < 20; poll++) {
+    const result = await getNowPlaying(credentials, fetcher, {
+      now: () => clock,
+    })
+    assert.equal(result.title, "Test song")
+    clock += 30_000
+  }
+  assert.equal(calls.history, 1)
+  assert.equal(calls.playing, 20)
+  // One access token serves every poll within its hour.
+  assert.equal(calls.token, 1)
+})
+
+test("a used-up quota keeps the last track and waits out Retry-After", async () => {
+  const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
+  __resetSpotifyMemory()
+  let clock = Date.parse("2026-10-10T20:00:00Z")
+  const calls = {}
+  const quota = () =>
+    Response.json(
+      { error: { status: 429, reason: "QUOTA_EXCEEDED" } },
+      { status: 429, headers: { "Retry-After": "1628" } }
+    )
+  const poll = (playback, recent) =>
+    getNowPlaying(credentials, spotify(playback, recent, calls), {
+      now: () => clock,
+    })
+  assert.equal((await poll(Response.json(track))).status, "playing")
+  clock += 30_000
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const result = await poll(quota)
+    assert.equal(result.status, "recent")
+    assert.equal(result.title, "Test song")
+    clock += 30_000
+  }
+  assert.equal(calls.playing, 2)
+  clock += 1628_000
+  assert.equal((await poll(Response.json(track))).status, "playing")
+  assert.equal(calls.playing, 3)
+})
+
+test("a history quota error stays idle and does not retry early", async () => {
+  const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
+  __resetSpotifyMemory()
+  let clock = Date.parse("2026-10-10T20:00:00Z")
+  const calls = {}
+  const quota = () =>
+    new Response(null, { status: 429, headers: { "Retry-After": "1628" } })
+  const poll = () =>
+    getNowPlaying(
+      credentials,
+      spotify(() => new Response(null, { status: 204 }), quota, calls),
+      { now: () => clock }
+    )
+  assert.deepEqual(await poll(), { status: "idle" })
+  clock += 20 * 60_000
+  assert.deepEqual(await poll(), { status: "idle" })
+  assert.equal(calls.history, 1)
+  clock += 10 * 60_000
+  await poll()
+  assert.equal(calls.history, 2)
+})
+
+test("a shared store keeps the last track across cold starts", async () => {
+  const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
+  let saved = null
+  const store = {
+    read: async () => saved && JSON.parse(saved),
+    write: async (memory) => {
+      saved = JSON.stringify(memory)
+    },
+  }
+  __resetSpotifyMemory()
+  await getNowPlaying(credentials, spotify(Response.json(track)), { store })
+  __resetSpotifyMemory()
+  const result = await getNowPlaying(
+    credentials,
+    spotify(new Response(null, { status: 204 }), null),
+    { store, now: () => Date.now() + 60_000 }
+  )
+  assert.equal(result.status, "recent")
+  assert.equal(result.title, "Test song")
+  assert.match(saved, /"url":"https:\/\/open.spotify.com\/track\/test"/)
+})
+
+test("an unreadable store falls back to Spotify itself", async () => {
+  const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
+  __resetSpotifyMemory()
+  const store = {
+    read: async () => {
+      throw Error("down")
+    },
+    write: async () => {
+      throw Error("down")
+    },
+  }
+  const result = await getNowPlaying(
+    credentials,
+    spotify(Response.json(track)),
+    {
+      store,
+    }
+  )
+  assert.equal(result.status, "playing")
 })
 
 test("empty or failing recent history stays idle without inventing a song", async () => {
