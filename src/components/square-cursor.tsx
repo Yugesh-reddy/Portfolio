@@ -7,6 +7,7 @@ import { useMediaQuery } from "@/hooks/use-media-query"
 import {
   isTrailSettled,
   stepTrail,
+  trailBounds,
   type CursorPoint,
 } from "@/features/portfolio/lib/cursor-trail"
 
@@ -42,14 +43,23 @@ export function SquareCursor() {
     let target: CursorPoint = { x: 0, y: 0 }
     let visible = false
     let frame: number | null = null
+    // The box the last frame drew in, so the next frame clears only that.
+    let drawn: ReturnType<typeof trailBounds> | null = null
+    let accent = ""
 
-    const draw = () => {
-      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
-      if (!visible || points.length === 0) return
-
-      const accent = getComputedStyle(document.documentElement)
+    // Read once per burst of movement and on theme changes, not every frame:
+    // getComputedStyle forces a style recalc, which Safari pays for mid-scroll.
+    const readAccent = () => {
+      accent = getComputedStyle(document.documentElement)
         .getPropertyValue("--cursor-accent")
         .trim()
+    }
+
+    const draw = () => {
+      if (drawn) ctx.clearRect(drawn.x, drawn.y, drawn.width, drawn.height)
+      drawn = null
+      if (!visible || points.length === 0) return
+
       ctx.lineCap = "round"
       ctx.lineJoin = "round"
       ctx.strokeStyle = accent
@@ -76,6 +86,8 @@ export function SquareCursor() {
         const half = LEAD_SIZE / 2
         ctx.fillRect(head.x - half, head.y - half, LEAD_SIZE, LEAD_SIZE)
       }
+
+      drawn = trailBounds(points, LEAD_SIZE)
     }
 
     // Animate only while the trail is catching up. A resting pointer, or a
@@ -100,6 +112,8 @@ export function SquareCursor() {
       canvas.style.width = `${w}px`
       canvas.style.height = `${h}px`
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      // Resizing wiped the canvas.
+      drawn = null
       wake()
     }
     resize()
@@ -109,6 +123,7 @@ export function SquareCursor() {
       if (points.length === 0) {
         points = Array.from({ length: TRAIL_COUNT }, () => ({ ...target }))
       }
+      if (frame === null) readAccent()
       visible = true
       wake()
     }
@@ -120,17 +135,23 @@ export function SquareCursor() {
       visible = true
       wake()
     }
+    const theme = new MutationObserver(() => {
+      readAccent()
+      wake()
+    })
 
     window.addEventListener("pointermove", onMove, { passive: true })
     window.addEventListener("resize", resize, { passive: true })
     document.documentElement.addEventListener("pointerleave", onLeave)
     document.documentElement.addEventListener("pointerenter", onEnter)
+    theme.observe(document.documentElement, { attributeFilter: ["class"] })
 
     return () => {
       window.removeEventListener("pointermove", onMove)
       window.removeEventListener("resize", resize)
       document.documentElement.removeEventListener("pointerleave", onLeave)
       document.documentElement.removeEventListener("pointerenter", onEnter)
+      theme.disconnect()
       if (frame !== null) window.cancelAnimationFrame(frame)
       ctx.clearRect(0, 0, canvas.width, canvas.height)
     }
