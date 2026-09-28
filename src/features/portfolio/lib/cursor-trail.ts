@@ -20,3 +20,36 @@ export function stepTrail(
   }
   return next
 }
+
+/** True once every trail point sits on the target, so drawing can stop. */
+export function isTrailSettled(
+  points: CursorPoint[],
+  target: CursorPoint,
+  epsilon = 0.1
+): boolean {
+  return points.every(
+    (point) =>
+      Math.abs(point.x - target.x) < epsilon &&
+      Math.abs(point.y - target.y) < epsilon
+  )
+}
+
+/** Padded box around the trail, in CSS pixels, for clearing only what was drawn. */
+export function trailBounds(points: CursorPoint[], padding: number) {
+  let left = Infinity
+  let top = Infinity
+  let right = -Infinity
+  let bottom = -Infinity
+  for (const { x, y } of points) {
+    left = Math.min(left, x)
+    top = Math.min(top, y)
+    right = Math.max(right, x)
+    bottom = Math.max(bottom, y)
+  }
+  return {
+    x: left - padding,
+    y: top - padding,
+    width: right - left + padding * 2,
+    height: bottom - top + padding * 2,
+  }
+}
