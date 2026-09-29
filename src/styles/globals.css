@@ -383,8 +383,18 @@
   }
 }
 
+/* On-screen hero sections fade in on load, staggered by --reveal-delay. */
+@utility reveal-on-load {
+  animation-name: reveal-in;
+  animation-duration: 600ms;
+  animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  animation-delay: var(--reveal-delay, 0s);
+  animation-fill-mode: both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
+  .reveal,
+  .reveal-on-load {
     animation: none;
   }
 }
