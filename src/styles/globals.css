@@ -357,6 +357,38 @@
   }
 }
 
+/*
+ * Scroll reveal for home sections (components/motion/reveal.tsx). The fade is
+ * tied to scroll position instead of a JavaScript observer, so it runs on the
+ * compositor and a section is never left invisible while the page is busy.
+ * Written as longhands: the `animation` shorthand resets `animation-timeline`.
+ */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@utility reveal {
+  @supports (animation-timeline: view()) {
+    animation-name: reveal-in;
+    animation-duration: auto;
+    /* easeOutCubic. Avoid linear(), which keeps Safari on the main thread. */
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+    animation-fill-mode: both;
+    animation-timeline: view();
+    /* Fully shown once the section's top is 200px above the viewport bottom. */
+    animation-range: entry 0% entry 200px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+}
+
 :root {
   /* white */
   --background: oklch(1 0 0);
