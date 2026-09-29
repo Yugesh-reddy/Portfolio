@@ -1,22 +1,47 @@
 "use client"
 
 import {
-  type HTMLMotionProps,
-  type Variants,
   motion,
   useReducedMotion,
+  type HTMLMotionProps,
+  type Variants,
 } from "motion/react"
 
 import { cn } from "@/lib/utils"
 
 /**
- * Shared motion language for the portfolio.
+ * Shared scroll reveal for the portfolio.
  *
- * Subtle, tasteful scroll-reveals: content fades and lifts a short distance as
- * it enters the viewport, once. A single easing/duration set keeps every
- * section feeling like one cohesive system. All transforms are disabled when
- * the user prefers reduced motion (content simply appears).
+ * Sections fade and lift a short distance as they scroll into view. The fade is
+ * a CSS scroll-driven animation (`reveal` in globals.css), so the browser runs
+ * it off the main thread and content never waits on JavaScript: a busy page
+ * can't leave a section blank. Browsers without scroll timelines, and visitors
+ * who prefer reduced motion, see the content as is.
  */
+export function Reveal({
+  delay,
+  className,
+  style,
+  ...props
+}: React.ComponentProps<"div"> & {
+  /**
+   * Seconds to wait before fading in on page load. For hero sections that are
+   * already on screen, where there's no scroll to drive the reveal.
+   */
+  delay?: number
+}) {
+  if (delay === undefined) {
+    return <div className={cn("reveal", className)} style={style} {...props} />
+  }
+
+  return (
+    <div
+      className={cn("reveal-on-load", className)}
+      style={{ "--reveal-delay": `${delay}s`, ...style } as React.CSSProperties}
+      {...props}
+    />
+  )
+}
 
 // easeOutCubic — gentle, even deceleration. Smoother than expo, no snap.
 const EASE = [0.33, 1, 0.68, 1] as const
@@ -26,50 +51,6 @@ const DEFAULT_Y = 14
 // blank gap before it fades in (what reads as a "delay" when scrolling).
 const VIEWPORT_MARGIN = "0px 0px -2% 0px"
 const VIEWPORT_AMOUNT = 0.08
-
-type RevealProps = HTMLMotionProps<"div"> & {
-  /** Seconds to wait before animating in (used to stagger hero sections). */
-  delay?: number
-  /** Distance in px to lift from. */
-  y?: number
-  /** Only animate the first time it enters the viewport. */
-  once?: boolean
-  /** Fraction of the element that must be visible to trigger. */
-  amount?: number
-}
-
-export function Reveal({
-  children,
-  className,
-  delay = 0,
-  y = DEFAULT_Y,
-  once = true,
-  amount = VIEWPORT_AMOUNT,
-  ...props
-}: RevealProps) {
-  const reduceMotion = useReducedMotion()
-
-  return (
-    <motion.div
-      className={className}
-      // `initial` must be identical on server and client (the server can't know
-      // the user's motion preference), otherwise reduced-motion clients trigger
-      // a hydration mismatch. We branch only the transition: reduced motion
-      // snaps to the final state instantly (duration 0) — no movement, no offset.
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, amount, margin: VIEWPORT_MARGIN }}
-      transition={
-        reduceMotion
-          ? { duration: 0 }
-          : { duration: DURATION, ease: EASE, delay }
-      }
-      {...props}
-    >
-      {children}
-    </motion.div>
-  )
-}
 
 const listVariants: Variants = {
   hidden: {},
