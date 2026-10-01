@@ -13,6 +13,7 @@ import * as introHelpers from "./home-intro-session.ts"
 import {
   getIntroScheduleMs,
   getIntroTimeline,
+  HOME_INTRO_SCRIPT,
   HOME_INTRO_SESSION_KEY,
   readHomeIntroStorage,
   resolveHomeIntroMode,
@@ -20,6 +21,67 @@ import {
   splitDisplayName,
   writeHomeIntroStorage,
 } from "./home-intro-session.ts"
+
+/** Runs the inline script against a fake page and reports what it decided. */
+function runIntroScript({
+  pathname = "/",
+  hash = "",
+  stored = null as string | null,
+  reducedMotion = false,
+} = {}) {
+  const dataset: Record<string, string> = {}
+  const store = new Map<string, string>()
+  if (stored !== null) store.set(HOME_INTRO_SESSION_KEY, stored)
+  const timers: { fn: () => void; ms: number }[] = []
+
+  new Function(
+    "document",
+    "location",
+    "sessionStorage",
+    "matchMedia",
+    "setTimeout",
+    HOME_INTRO_SCRIPT
+  )(
+    { documentElement: { dataset } },
+    { pathname, hash },
+    {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, value),
+    },
+    () => ({ matches: reducedMotion }),
+    (fn: () => void, ms: number) => timers.push({ fn, ms })
+  )
+
+  return { dataset, store, timers }
+}
+
+describe("HOME_INTRO_SCRIPT", () => {
+  it("plays on the session's first visit to the home page", () => {
+    const { dataset, store } = runIntroScript()
+    assert.equal(dataset.homeIntro, "play")
+    assert.equal(store.get(HOME_INTRO_SESSION_KEY), "true")
+  })
+
+  it("skips once the session has seen a page", () => {
+    assert.equal(
+      runIntroScript({ stored: "true" }).dataset.homeIntro,
+      undefined
+    )
+  })
+
+  it("marks the session when it lands somewhere else first", () => {
+    const { dataset, store } = runIntroScript({ pathname: "/blog" })
+    assert.equal(dataset.homeIntro, undefined)
+    assert.equal(store.get(HOME_INTRO_SESSION_KEY), "true")
+  })
+
+  it("skips visitors who prefer reduced motion", () => {
+    assert.equal(
+      runIntroScript({ reducedMotion: true }).dataset.homeIntro,
+      undefined
+    )
+  })
+})
 
 type MorphHelpers = {
   getIntroPresentationState: (
