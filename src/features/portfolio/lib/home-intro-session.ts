@@ -1,5 +1,13 @@
 export const HOME_INTRO_SESSION_KEY = "home-intro-started"
 
+/**
+ * Runs inline before the first paint. On the session's first page load, when
+ * that page is the home page, it sets html[data-home-intro="play"] so the
+ * splash is up from the first frame and its CSS animations start there. It
+ * skips visitors who prefer reduced motion.
+ */
+export const HOME_INTRO_SCRIPT = `(function(){try{var d=document.documentElement,k=${JSON.stringify(HOME_INTRO_SESSION_KEY)};if(location.pathname==="/"&&sessionStorage.getItem(k)!=="true"&&!matchMedia("(prefers-reduced-motion: reduce)").matches){d.dataset.homeIntro="play"}sessionStorage.setItem(k,"true")}catch(e){}})()`
+
 export type IntroMode = "pending" | "play" | "skip"
 export type IntroPhase = "greetings" | "identity" | "morphing"
 
