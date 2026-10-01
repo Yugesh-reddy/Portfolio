@@ -2,13 +2,17 @@ import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 
 import {
+  FIRST_GREETING_HOLD_MS,
   GREETING_DURATION_MS,
+  GREETING_FADE_MS,
+  GREETING_HOLD_MS,
   GREETINGS,
   IDENTITY_HOLD_MS,
 } from "../components/intro/intro-shared.ts"
 import * as introHelpers from "./home-intro-session.ts"
 import {
   getIntroScheduleMs,
+  getIntroTimeline,
   HOME_INTRO_SESSION_KEY,
   readHomeIntroStorage,
   resolveHomeIntroMode,
@@ -219,5 +223,31 @@ describe("getIntroPresentationState", () => {
         shouldLockScroll: false,
       }
     )
+  })
+})
+
+describe("getIntroTimeline", () => {
+  it("fades each greeting in as the previous one fades out", () => {
+    const { greetings, identityMs } = getIntroTimeline(3, 200, 80, 60)
+    assert.deepEqual(greetings, [
+      { inMs: 0, outMs: 260 },
+      { inMs: 260, outMs: 400 },
+      { inMs: 400, outMs: 540 },
+    ])
+    assert.equal(identityMs, 540)
+  })
+
+  it("shows every greeting for the live timings", () => {
+    const { greetings, identityMs } = getIntroTimeline(
+      GREETINGS.length,
+      FIRST_GREETING_HOLD_MS,
+      GREETING_HOLD_MS,
+      GREETING_FADE_MS
+    )
+    assert.equal(greetings.length, GREETINGS.length)
+    for (const { inMs, outMs } of greetings) {
+      assert.ok(outMs - inMs >= GREETING_FADE_MS + GREETING_HOLD_MS)
+    }
+    assert.equal(identityMs, greetings.at(-1)?.outMs)
   })
 })
