@@ -71,6 +71,29 @@ export function getIntroScheduleMs(
   }
 }
 
+/**
+ * When each greeting fades in and out, in ms from the first paint. Each one
+ * fades in as the one before it fades out, and the identity line fades in as
+ * the last greeting leaves.
+ */
+export function getIntroTimeline(
+  greetingCount: number,
+  firstHoldMs: number,
+  holdMs: number,
+  fadeMs: number
+): { greetings: { inMs: number; outMs: number }[]; identityMs: number } {
+  const greetings: { inMs: number; outMs: number }[] = []
+  let atMs = 0
+
+  for (let index = 0; index < greetingCount; index++) {
+    const outMs = atMs + fadeMs + (index === 0 ? firstHoldMs : holdMs)
+    greetings.push({ inMs: atMs, outMs })
+    atMs = outMs
+  }
+
+  return { greetings, identityMs: atMs }
+}
+
 export function splitDisplayName(
   displayName: string,
   firstName: string
