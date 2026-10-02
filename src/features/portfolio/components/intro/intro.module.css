@@ -1,0 +1,90 @@
+/*
+ * Home intro splash. HOME_INTRO_SCRIPT sets html[data-home-intro="play"] before
+ * the first paint, so the greetings and the identity line run as CSS animations
+ * from the first frame: a main thread busy hydrating the page can't skip, bunch
+ * or stretch them. IntroProfile then moves the identity line into the header
+ * and steps the attribute through "morph" and "landed" to "done".
+ */
+
+.splash {
+  display: none;
+}
+
+:global(html[data-home-intro="play"]) .splash,
+:global(html[data-home-intro="morph"]) .splash,
+:global(html[data-home-intro="landed"]) .splash {
+  display: block;
+}
+
+.backdrop {
+  position: fixed;
+  inset: -4px;
+  z-index: 60;
+  background: var(--background);
+  touch-action: none;
+}
+
+.greetings,
+.identity {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  color: var(--foreground);
+}
+
+.greetings {
+  display: grid;
+  place-items: center;
+}
+
+/* Every greeting sits in the same cell and takes its turn. */
+.greeting {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  animation:
+    greeting-in var(--greeting-fade) var(--greeting-easing) var(--in) both,
+    greeting-out var(--greeting-fade) var(--greeting-easing) var(--out) forwards;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  animation: greeting-in var(--identity-fade) var(--greeting-easing) var(--in)
+    both;
+}
+
+.avatar {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+:global(html[data-home-intro="landed"]) .identity {
+  visibility: hidden;
+}
+
+@keyframes greeting-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25em);
+  }
+}
+
+@keyframes greeting-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.25em);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash {
+    display: none !important;
+  }
+}
