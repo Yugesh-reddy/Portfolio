@@ -83,6 +83,33 @@
   }
 }
 
+/* Header pieces the intro reveals as the curtain lifts (ProfileHeader). */
+:global(html[data-home-intro="play"]) .detail {
+  opacity: 0;
+  transform: translateY(var(--detail-lift, 2px));
+}
+
+:global(html[data-home-intro="morph"]) .detail,
+:global(html[data-home-intro="landed"]) .detail {
+  transition:
+    opacity var(--detail-duration) var(--detail-easing) var(--detail-delay),
+    transform var(--detail-duration) var(--detail-easing) var(--detail-delay);
+}
+
+.detailBlock {
+  --detail-lift: 4px;
+}
+
+/* The header's avatar and first name stay hidden until the morph lands on them. */
+:global(html[data-home-intro="play"]) .target,
+:global(html[data-home-intro="morph"]) .target {
+  opacity: 0;
+}
+
+:global(html[data-home-intro="landed"]) .target {
+  z-index: 61;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .splash {
     display: none !important;
