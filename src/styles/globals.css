@@ -399,6 +399,14 @@
   }
 }
 
+/* Hold the page still while the home intro plays (components/intro). */
+html[data-home-intro="play"],
+html[data-home-intro="morph"],
+html[data-home-intro="landed"] {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
 :root {
   /* white */
   --background: oklch(1 0 0);
