@@ -1,6 +1,6 @@
 "use client"
 
-import type { CSSProperties, RefObject } from "react"
+import type { CSSProperties } from "react"
 
 import { cn } from "@/lib/utils"
 import { SpotlightLogo } from "@/components/spotlight-logo"
@@ -12,6 +12,7 @@ import {
   PROFILE_NAME_CLASS,
   ROLE_STAGGER_MS,
 } from "@/features/portfolio/components/intro/intro-shared"
+import introStyles from "@/features/portfolio/components/intro/intro.module.css"
 import { USER } from "@/features/portfolio/data/user"
 import { splitDisplayName } from "@/features/portfolio/lib/home-intro-session"
 
@@ -21,59 +22,48 @@ import { HandwrittenArrow, HandwrittenNote } from "./handwritten-note"
 import { PronounceMyName } from "./pronounce-my-name"
 import { VerifiedIcon } from "./verified-icon"
 
-type ProfileHeaderIntro = {
-  avatarTargetRef: RefObject<HTMLDivElement | null>
-  nameTargetRef: RefObject<HTMLSpanElement | null>
-  detailsVisible: boolean
-  morphTargetsVisible: boolean
-  elevateMorphTargets: boolean
-}
-
-export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
+/**
+ * `intro` marks the pieces the home intro reveals (intro.module.css). They only
+ * hide while html[data-home-intro] says the intro is playing.
+ */
+export function ProfileHeader({ intro = false }: { intro?: boolean }) {
   const { first, remainder } = splitDisplayName(
     USER.displayName,
     USER.firstName
   )
   const middleName =
-    remainder && remainder !== USER.lastName && remainder.endsWith(USER.lastName)
+    remainder &&
+    remainder !== USER.lastName &&
+    remainder.endsWith(USER.lastName)
       ? remainder.slice(0, -USER.lastName.length).trim()
       : ""
-  const lastName = remainder
-    ? middleName
-      ? USER.lastName
-      : remainder
-    : ""
-  const detailsVisible = intro?.detailsVisible ?? true
-  const morphTargetsVisible = intro?.morphTargetsVisible ?? true
-  const detailStyle: CSSProperties | undefined = intro
-    ? {
-        transitionDelay: intro.detailsVisible ? `${DETAIL_DELAY_MS}ms` : "0ms",
-        transitionDuration: `${DETAIL_DURATION_MS}ms`,
-        transitionTimingFunction: DETAIL_EASING,
-      }
+  const lastName = remainder ? (middleName ? USER.lastName : remainder) : ""
+  const introVars = intro
+    ? ({
+        "--detail-delay": `${DETAIL_DELAY_MS}ms`,
+        "--detail-duration": `${DETAIL_DURATION_MS}ms`,
+        "--detail-easing": DETAIL_EASING,
+      } as CSSProperties)
     : undefined
-  const roleStyle: CSSProperties | undefined = intro
-    ? {
-        transitionDelay: intro.detailsVisible
-          ? `${DETAIL_DELAY_MS + ROLE_STAGGER_MS}ms`
-          : "0ms",
-        transitionDuration: `${DETAIL_DURATION_MS}ms`,
-        transitionTimingFunction: DETAIL_EASING,
-      }
+  const roleVars = intro
+    ? ({
+        "--detail-delay": `${DETAIL_DELAY_MS + ROLE_STAGGER_MS}ms`,
+      } as CSSProperties)
     : undefined
+  const detail = intro && introStyles.detail
+  const detailBlock = intro && cn(introStyles.detail, introStyles.detailBlock)
+  const target = intro && introStyles.target
 
   return (
-    <div className="screen-line-bottom relative grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] overflow-y-clip border-x border-line">
+    <div
+      className="screen-line-bottom relative grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] overflow-y-clip border-x border-line"
+      style={introVars}
+    >
       <figure
         className={cn(
           "relative col-span-2 p-2 sm:col-span-1 sm:col-start-2 sm:p-4",
-          intro &&
-            "transform-gpu transition-[opacity,transform] motion-reduce:transition-none",
-          detailsVisible
-            ? "translate-y-0 opacity-100"
-            : "translate-y-1 opacity-0"
+          detailBlock
         )}
-        style={detailStyle}
       >
         <SpotlightLogo />
         <HandwrittenNote
@@ -96,15 +86,11 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
         <div className="screen-line-top mt-auto shrink-0 border-r border-line">
           <AvatarLightsToggle className="group/avatar-lights-toggle mx-0.5 my-0.75 flex outline-none">
             <div
-              ref={intro?.avatarTargetRef}
-              className={cn(
-                "relative h-fit w-fit shrink-0",
-                morphTargetsVisible ? "opacity-100" : "opacity-0",
-                intro?.elevateMorphTargets && "z-[61]"
-              )}
+              data-intro-target={intro ? "avatar" : undefined}
+              className={cn("relative h-fit w-fit shrink-0", target)}
             >
               <AvatarLights
-                className="size-28 ring-[#fbbf24] ring-offset-2 ring-offset-background group-focus-visible/avatar-lights-toggle:ring-2 min-[24rem]:size-28 min-[420px]:size-30 min-[540px]:size-32 sm:size-40 dark:ring-[#FFC799]"
+                className="size-28 ring-[#fbbf24] ring-offset-2 ring-offset-background group-focus-visible/avatar-lights-toggle:ring-2 min-[420px]:size-30 min-[540px]:size-32 min-[24rem]:size-28 sm:size-40 dark:ring-[#FFC799]"
                 variants={USER.avatarVariants}
               />
             </div>
@@ -114,7 +100,7 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
 
       <div className="flex min-w-0 flex-col">
         <div className="mt-auto border-t border-line">
-          <div className="flex min-w-0 items-end gap-2 pl-4 pr-2 min-[375px]:items-center">
+          <div className="flex min-w-0 items-end gap-2 pr-2 pl-4 min-[375px]:items-center">
             <h1
               aria-label={USER.displayName}
               className={cn(
@@ -124,29 +110,15 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
               )}
             >
               <span
-                ref={intro?.nameTargetRef}
-                className={cn(
-                  "relative inline-block",
-                  morphTargetsVisible ? "opacity-100" : "opacity-0",
-                  intro?.elevateMorphTargets && "z-[61]"
-                )}
+                data-intro-target={intro ? "name" : undefined}
+                className={cn("relative inline-block", target)}
               >
                 {first}
               </span>
               {lastName ? (
                 <>
                   {" "}
-                  <span
-                    className={cn(
-                      "inline-block transform-gpu",
-                      intro &&
-                        "transition-[opacity,transform] motion-reduce:transition-none",
-                      detailsVisible
-                        ? "translate-y-0 opacity-100"
-                        : "translate-y-0.5 opacity-0"
-                    )}
-                    style={detailStyle}
-                  >
+                  <span className={cn("inline-block", detail)}>
                     {middleName ? (
                       <span className="hidden min-[540px]:inline" aria-hidden>
                         {middleName}{" "}
@@ -158,17 +130,7 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
               ) : null}
             </h1>
 
-            <div
-              className={cn(
-                "flex shrink-0 transform-gpu items-center gap-2",
-                intro &&
-                  "transition-[opacity,transform] motion-reduce:transition-none",
-                detailsVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-0.5 opacity-0"
-              )}
-              style={detailStyle}
-            >
+            <div className={cn("flex shrink-0 items-center gap-2", detail)}>
               <VerifiedIcon
                 className="size-4.5 text-foreground select-none"
                 aria-label="Verified"
@@ -182,17 +144,7 @@ export function ProfileHeader({ intro }: { intro?: ProfileHeaderIntro }) {
             </div>
           </div>
 
-          <div
-            className={cn(
-              "transform-gpu",
-              intro &&
-                "transition-[opacity,transform] motion-reduce:transition-none",
-              detailsVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-1 opacity-0"
-            )}
-            style={roleStyle}
-          >
+          <div className={cn(detailBlock)} style={roleVars}>
             <FlipSentences className="h-12.5 border-t border-line py-1 pl-4 sm:h-9">
               {USER.flipSentences}
             </FlipSentences>

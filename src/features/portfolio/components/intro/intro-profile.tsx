@@ -1,151 +1,117 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { useReducedMotion } from "motion/react"
+import { useEffect, useRef, type CSSProperties } from "react"
 
-import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll"
+import { cn } from "@/lib/utils"
 import { ProfileHeader } from "@/features/portfolio/components/profile-header"
 import { USER } from "@/features/portfolio/data/user"
 import {
-  getIntroPresentationState,
-  getIntroScheduleMs,
+  getIntroTimeline,
   getMorphTransform,
-  type IntroMode,
-  type IntroPhase,
 } from "@/features/portfolio/lib/home-intro-session"
 
 import {
   CURTAIN_DELAY_MS,
   CURTAIN_DURATION_MS,
   CURTAIN_EASING,
-  GREETING_DURATION_MS,
+  FIRST_GREETING_HOLD_MS,
+  GREETING_EASING,
+  GREETING_FADE_MS,
+  GREETING_HOLD_MS,
   GREETINGS,
   IDENTITY_AVATAR_SIZE,
+  IDENTITY_FADE_MS,
   IDENTITY_HOLD_MS,
   PROFILE_LAYOUT_DURATION_MS,
   PROFILE_LAYOUT_EASING,
   PROFILE_NAME_CLASS,
 } from "./intro-shared"
+import styles from "./intro.module.css"
 
-export function IntroProfile({ mode }: { mode: IntroMode }) {
-  const shouldReduceMotion = useReducedMotion()
-  const [phase, setPhase] = useState<IntroPhase>("greetings")
-  const [greetingIndex, setGreetingIndex] = useState(0)
-  const [hasMorphFinished, setHasMorphFinished] = useState(false)
-  const [isIntroComplete, setIsIntroComplete] = useState(false)
-  const sourceAvatarRef = useRef<HTMLDivElement>(null)
-  const sourceNameRef = useRef<HTMLSpanElement>(null)
-  const targetAvatarRef = useRef<HTMLDivElement>(null)
-  const targetNameRef = useRef<HTMLSpanElement>(null)
+const timeline = getIntroTimeline(
+  GREETINGS.length,
+  FIRST_GREETING_HOLD_MS,
+  GREETING_HOLD_MS,
+  GREETING_FADE_MS
+)
+
+const splashVars = {
+  "--greeting-fade": `${GREETING_FADE_MS}ms`,
+  "--identity-fade": `${IDENTITY_FADE_MS}ms`,
+  "--greeting-easing": GREETING_EASING,
+} as CSSProperties
+
+export function IntroProfile() {
+  const rootRef = useRef<HTMLDivElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
-  const reduceMotion = shouldReduceMotion === true
-  const shouldPlayIntro = mode === "play" && !reduceMotion
-  const presentation = getIntroPresentationState(
-    mode,
-    phase,
-    hasMorphFinished,
-    isIntroComplete,
-    reduceMotion
-  )
-
-  useLockBodyScroll(presentation.shouldLockScroll)
+  const identityRef = useRef<HTMLDivElement>(null)
+  const imRef = useRef<HTMLSpanElement>(null)
+  const avatarRef = useRef<HTMLSpanElement>(null)
+  const nameRef = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    if (!shouldPlayIntro) {
-      return
+    const html = document.documentElement
+    const running: Animation[] = []
+    let cancelled = false
+    let timer = 0
+    let frame = 0
+
+    const finish = () => {
+      html.dataset.homeIntro = "done"
+      for (const animation of running) animation.cancel()
     }
 
-    const schedule = getIntroScheduleMs(
-      GREETINGS.length,
-      GREETING_DURATION_MS,
-      IDENTITY_HOLD_MS
-    )
-    const timers = [
-      ...schedule.greetingSwitchAtMs.map((atMs, index) =>
-        window.setTimeout(() => setGreetingIndex(index + 1), atMs)
-      ),
-      window.setTimeout(() => setPhase("identity"), schedule.identityAtMs),
-      window.setTimeout(() => setPhase("morphing"), schedule.profileAtMs),
-    ]
+    const morph = () => {
+      if (cancelled || html.dataset.homeIntro !== "play") return
 
-    return () => {
-      for (const timer of timers) {
-        window.clearTimeout(timer)
+      const avatar = avatarRef.current
+      const name = nameRef.current
+      const backdrop = backdropRef.current
+      const targetAvatar = rootRef.current?.querySelector<HTMLElement>(
+        '[data-intro-target="avatar"]'
+      )
+      const targetName = rootRef.current?.querySelector<HTMLElement>(
+        '[data-intro-target="name"]'
+      )
+      if (!avatar || !name || !backdrop || !targetAvatar || !targetName) {
+        finish()
+        return
       }
-    }
-  }, [shouldPlayIntro])
 
-  useLayoutEffect(() => {
-    if (!shouldPlayIntro || phase !== "morphing") {
-      return
-    }
+      const avatarFrom = avatar.getBoundingClientRect()
+      const avatarTo = targetAvatar.getBoundingClientRect()
+      const avatarMove = getMorphTransform(avatarFrom, avatarTo, true)
+      const nameMove = getMorphTransform(
+        name.getBoundingClientRect(),
+        targetName.getBoundingClientRect(),
+        true
+      )
 
-    const sourceAvatar = sourceAvatarRef.current
-    const sourceName = sourceNameRef.current
-    const targetAvatar = targetAvatarRef.current
-    const targetName = targetNameRef.current
-    const backdrop = backdropRef.current
-
-    if (
-      !sourceAvatar ||
-      !sourceName ||
-      !targetAvatar ||
-      !targetName ||
-      !backdrop
-    ) {
-      queueMicrotask(() => {
-        setHasMorphFinished(true)
-        setIsIntroComplete(true)
-      })
-      return
-    }
-
-    const avatarTransform = getMorphTransform(
-      sourceAvatar.getBoundingClientRect(),
-      targetAvatar.getBoundingClientRect(),
-      true
-    )
-    const nameTransform = getMorphTransform(
-      sourceName.getBoundingClientRect(),
-      targetName.getBoundingClientRect(),
-      false
-    )
-    let avatarAnimation: Animation
-    let nameAnimation: Animation
-    let curtainAnimation: Animation
-
-    try {
-      avatarAnimation = sourceAvatar.animate(
+      const move = {
+        duration: PROFILE_LAYOUT_DURATION_MS,
+        easing: PROFILE_LAYOUT_EASING,
+        fill: "forwards",
+      } as const
+      const avatarAnimation = avatar.animate(
         [
-          { transform: "translate3d(0, 0, 0) scale(1)" },
+          { transform: "none" },
           {
-            transform: `translate3d(${avatarTransform.translateX}px, ${avatarTransform.translateY}px, 0) scale(${avatarTransform.scale})`,
+            transform: `translate(${avatarMove.translateX}px, ${avatarMove.translateY}px) scale(${avatarMove.scale})`,
           },
         ],
-        {
-          duration: PROFILE_LAYOUT_DURATION_MS,
-          easing: PROFILE_LAYOUT_EASING,
-          fill: "forwards",
-        }
+        move
       )
-      nameAnimation = sourceName.animate(
+      const nameAnimation = name.animate(
         [
-          { transform: "translate3d(0, 0, 0)" },
+          { transform: "none" },
           {
-            transform: `translate3d(${nameTransform.translateX}px, ${nameTransform.translateY}px, 0)`,
+            transform: `translate(${nameMove.translateX}px, ${nameMove.translateY}px) scale(${nameMove.scale})`,
           },
         ],
-        {
-          duration: PROFILE_LAYOUT_DURATION_MS,
-          easing: PROFILE_LAYOUT_EASING,
-          fill: "forwards",
-        }
+        move
       )
-      curtainAnimation = backdrop.animate(
-        [
-          { transform: "translate3d(0, 0, 0)" },
-          { transform: "translate3d(0, -100%, 0)" },
-        ],
+      const curtainAnimation = backdrop.animate(
+        [{ transform: "none" }, { transform: "translateY(-100%)" }],
         {
           delay: CURTAIN_DELAY_MS,
           duration: CURTAIN_DURATION_MS,
@@ -153,122 +119,126 @@ export function IntroProfile({ mode }: { mode: IntroMode }) {
           fill: "forwards",
         }
       )
-    } catch {
-      queueMicrotask(() => {
-        setHasMorphFinished(true)
-        setIsIntroComplete(true)
-      })
-      return
+      running.push(avatarAnimation, nameAnimation, curtainAnimation)
+      if (imRef.current) {
+        running.push(
+          imRef.current.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: 160,
+            easing: "ease-out",
+            fill: "forwards",
+          })
+        )
+      }
+      html.dataset.homeIntro = "morph"
+
+      const landed = Promise.all([
+        avatarAnimation.finished,
+        nameAnimation.finished,
+      ])
+      landed
+        .then(() => {
+          if (!cancelled) html.dataset.homeIntro = "landed"
+        })
+        .catch(() => undefined)
+      Promise.all([landed, curtainAnimation.finished])
+        .then(() => {
+          if (!cancelled) finish()
+        })
+        .catch(() => undefined)
     }
 
-    let isCancelled = false
-
-    void Promise.all([avatarAnimation.finished, nameAnimation.finished])
-      .then(() => {
-        if (!isCancelled) {
-          setHasMorphFinished(true)
+    // Morph once the identity line has faded in and held, timed from its own
+    // CSS animation, so a slow hydration only lengthens the hold.
+    const scheduleMorph = async () => {
+      let shownAtMs = timeline.identityMs + IDENTITY_FADE_MS
+      const fadeIn = identityRef.current?.getAnimations()[0]
+      if (fadeIn) {
+        await fadeIn.ready.catch(() => undefined)
+        const endMs = fadeIn.effect?.getComputedTiming().endTime
+        if (fadeIn.startTime !== null && typeof endMs === "number") {
+          shownAtMs = Number(fadeIn.startTime) + endMs
         }
-      })
-      .catch(() => undefined)
+      }
+      if (cancelled) return
 
-    void curtainAnimation.finished
-      .then(() => {
-        if (!isCancelled) {
-          setIsIntroComplete(true)
-        }
-      })
-      .catch(() => undefined)
+      const nowMs = Number(document.timeline.currentTime ?? performance.now())
+      timer = window.setTimeout(
+        () => {
+          frame = window.requestAnimationFrame(morph)
+        },
+        Math.max(0, shownAtMs + IDENTITY_HOLD_MS - nowMs)
+      )
+    }
+
+    if (html.dataset.homeIntro === "play") void scheduleMorph()
 
     return () => {
-      isCancelled = true
-      avatarAnimation.cancel()
-      nameAnimation.cancel()
-      curtainAnimation.cancel()
+      cancelled = true
+      window.clearTimeout(timer)
+      window.cancelAnimationFrame(frame)
     }
-  }, [phase, shouldPlayIntro])
+  }, [])
 
   return (
-    <div>
-      {shouldPlayIntro && phase !== "morphing" ? (
-        <img
-          src={USER.avatar}
-          alt=""
-          width={IDENTITY_AVATAR_SIZE}
-          height={IDENTITY_AVATAR_SIZE}
-          aria-hidden="true"
-          className="pointer-events-none fixed size-px opacity-0"
-        />
-      ) : null}
+    <div ref={rootRef}>
+      <div className={styles.splash} style={splashVars} aria-hidden="true">
+        <div ref={backdropRef} className={styles.backdrop} />
 
-      {presentation.showBackdrop ? (
-        <div
-          ref={backdropRef}
-          data-intro-backdrop=""
-          aria-hidden="true"
-          className="pointer-events-auto fixed -inset-1 z-[60] touch-none bg-background will-change-transform"
-        />
-      ) : null}
-
-      {presentation.showGreeting ? (
-        <p
-          aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-[61] flex items-center justify-center gap-1.5 text-2xl leading-snug font-semibold tracking-tight text-foreground"
-        >
-          <span className="size-1.5 rounded-full bg-current" />
-          <span>{GREETINGS[greetingIndex]}</span>
+        <p className={styles.greetings}>
+          {GREETINGS.map((greeting, index) => (
+            <span
+              key={greeting}
+              className={cn(
+                styles.greeting,
+                "text-2xl leading-snug font-semibold tracking-tight"
+              )}
+              style={
+                {
+                  "--in": `${timeline.greetings[index].inMs}ms`,
+                  "--out": `${timeline.greetings[index].outMs}ms`,
+                } as CSSProperties
+              }
+            >
+              <span className="size-1.5 rounded-full bg-current" />
+              {greeting}
+            </span>
+          ))}
         </p>
-      ) : null}
 
-      {presentation.showIdentity ? (
         <div
-          aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-[61] flex items-center justify-center gap-2 text-foreground"
+          ref={identityRef}
+          className={styles.identity}
+          style={{ "--in": `${timeline.identityMs}ms` } as CSSProperties}
         >
-          <span
-            className={
-              phase === "morphing"
-                ? "invisible text-2xl leading-snug font-medium"
-                : "text-2xl leading-snug font-medium"
-            }
-          >
+          <span ref={imRef} className="text-2xl leading-snug font-medium">
             I&apos;m
           </span>
-          <div
-            ref={sourceAvatarRef}
-            className="relative shrink-0 origin-center overflow-hidden rounded-full will-change-transform [backface-visibility:hidden]"
+          <span
+            ref={avatarRef}
+            className={styles.avatar}
             style={{
               width: IDENTITY_AVATAR_SIZE,
               height: IDENTITY_AVATAR_SIZE,
             }}
           >
+            {/* The same small image the header shows, so it's already decoded. */}
             <img
-              src={USER.avatar}
+              src={USER.avatarVariants.lightOff}
               alt=""
-              className="size-full rounded-full object-cover"
+              fetchPriority="high"
+              className="size-full object-cover"
             />
-          </div>
+          </span>
           <span
-            ref={sourceNameRef}
-            className={`${PROFILE_NAME_CLASS} inline-block origin-center will-change-transform [backface-visibility:hidden]`}
+            ref={nameRef}
+            className={cn(PROFILE_NAME_CLASS, "inline-block")}
           >
             {USER.firstName}
           </span>
         </div>
-      ) : null}
+      </div>
 
-      <ProfileHeader
-        intro={
-          shouldPlayIntro
-            ? {
-                avatarTargetRef: targetAvatarRef,
-                nameTargetRef: targetNameRef,
-                detailsVisible: presentation.detailsVisible,
-                morphTargetsVisible: presentation.showMorphTargets,
-                elevateMorphTargets: presentation.elevateMorphTargets,
-              }
-            : undefined
-        }
-      />
+      <ProfileHeader intro />
     </div>
   )
 }

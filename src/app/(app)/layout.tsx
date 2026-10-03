@@ -3,6 +3,7 @@ import dynamic from "next/dynamic"
 import { SiteBottomNav } from "@/components/site-bottom-nav"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
+import { HOME_INTRO_SCRIPT } from "@/features/portfolio/lib/home-intro-session"
 
 const ScrollToTop = dynamic(() =>
   import("@/components/scroll-to-top").then((mod) => mod.ScrollToTop)
@@ -18,6 +19,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       id="top"
       className="group/layout pb-[calc(--spacing(24)+env(safe-area-inset-bottom,0px))] sm:pb-12"
     >
+      {/* Before anything paints: should the home intro play? */}
+      <script dangerouslySetInnerHTML={{ __html: HOME_INTRO_SCRIPT }} />
       <SiteHeader />
       <main className="max-w-screen overflow-x-clip px-2">{children}</main>
       <SiteFooter />
