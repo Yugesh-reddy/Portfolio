@@ -12,7 +12,6 @@ export const GREETING_FADE_MS = 70
 export const FIRST_GREETING_HOLD_MS = 260
 export const GREETING_HOLD_MS = 90
 export const IDENTITY_FADE_MS = 200
-export const GREETING_DURATION_MS = 120
 /** Shortest time "I'm Yugesh" stays put before it moves into the header. */
 export const IDENTITY_HOLD_MS = 380
 export const PROFILE_LAYOUT_DURATION_MS = 600
