@@ -87,6 +87,15 @@ export function IntroProfile() {
         true
       )
 
+      // Draw the avatar at its header size and shrink it to the splash size, so
+      // it stays sharp as it grows instead of stretching a small bitmap. The
+      // negative margin keeps the identity line's layout as it was.
+      const size = avatarTo.width
+      const inset = (size - avatarFrom.width) / 2
+      avatar.style.width = `${size}px`
+      avatar.style.height = `${size}px`
+      avatar.style.margin = `${-inset}px`
+
       const move = {
         duration: PROFILE_LAYOUT_DURATION_MS,
         easing: PROFILE_LAYOUT_EASING,
@@ -94,9 +103,9 @@ export function IntroProfile() {
       } as const
       const avatarAnimation = avatar.animate(
         [
-          { transform: "none" },
+          { transform: `scale(${1 / avatarMove.scale})` },
           {
-            transform: `translate(${avatarMove.translateX}px, ${avatarMove.translateY}px) scale(${avatarMove.scale})`,
+            transform: `translate(${avatarMove.translateX}px, ${avatarMove.translateY}px)`,
           },
         ],
         move
