@@ -10,6 +10,7 @@ import {
 import {
   getIntroTimeline,
   getMorphTransform,
+  HOME_INTRO_FAILSAFE_MS,
   HOME_INTRO_SCRIPT,
   HOME_INTRO_SESSION_KEY,
   splitDisplayName,
@@ -77,6 +78,21 @@ describe("HOME_INTRO_SCRIPT", () => {
       runIntroScript({ reducedMotion: true }).dataset.homeIntro,
       undefined
     )
+  })
+
+  it("clears the splash if the page never takes over", () => {
+    const { dataset, timers } = runIntroScript()
+    assert.equal(timers.length, 1)
+    assert.equal(timers[0].ms, HOME_INTRO_FAILSAFE_MS)
+    timers[0].fn()
+    assert.equal(dataset.homeIntro, "done")
+  })
+
+  it("leaves an intro that is already moving alone", () => {
+    const { dataset, timers } = runIntroScript()
+    dataset.homeIntro = "morph"
+    timers[0].fn()
+    assert.equal(dataset.homeIntro, "morph")
   })
 })
 

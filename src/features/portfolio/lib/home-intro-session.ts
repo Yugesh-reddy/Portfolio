@@ -1,12 +1,16 @@
 export const HOME_INTRO_SESSION_KEY = "home-intro-started"
 
+/** If the page still hasn't hydrated this long after it loads, drop the splash. */
+export const HOME_INTRO_FAILSAFE_MS = 6000
+
 /**
  * Runs inline before the first paint. On the session's first page load, when
  * that page is the home page, it sets html[data-home-intro="play"] so the
  * splash is up from the first frame and its CSS animations start there. It
- * skips visitors who prefer reduced motion or arrive at a section link.
+ * skips visitors who prefer reduced motion or arrive at a section link, and
+ * clears the splash if the page never hydrates.
  */
-export const HOME_INTRO_SCRIPT = `(function(){try{var d=document.documentElement,k=${JSON.stringify(HOME_INTRO_SESSION_KEY)};if(location.pathname==="/"&&!location.hash&&sessionStorage.getItem(k)!=="true"&&!matchMedia("(prefers-reduced-motion: reduce)").matches){d.dataset.homeIntro="play"}sessionStorage.setItem(k,"true")}catch(e){}})()`
+export const HOME_INTRO_SCRIPT = `(function(){try{var d=document.documentElement,k=${JSON.stringify(HOME_INTRO_SESSION_KEY)};if(location.pathname==="/"&&!location.hash&&sessionStorage.getItem(k)!=="true"&&!matchMedia("(prefers-reduced-motion: reduce)").matches){d.dataset.homeIntro="play";setTimeout(function(){if(d.dataset.homeIntro==="play")d.dataset.homeIntro="done"},${HOME_INTRO_FAILSAFE_MS})}sessionStorage.setItem(k,"true")}catch(e){}})()`
 
 type ElementRect = {
   x: number
