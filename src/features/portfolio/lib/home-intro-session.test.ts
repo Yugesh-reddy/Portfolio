@@ -68,7 +68,11 @@ describe("HOME_INTRO_SCRIPT", () => {
     assert.equal(store.get(HOME_INTRO_SESSION_KEY), "true")
   })
 
-  it("skips visitors who prefer reduced motion", () => {
+  it("skips section links and reduced motion", () => {
+    assert.equal(
+      runIntroScript({ hash: "#projects" }).dataset.homeIntro,
+      undefined
+    )
     assert.equal(
       runIntroScript({ reducedMotion: true }).dataset.homeIntro,
       undefined
