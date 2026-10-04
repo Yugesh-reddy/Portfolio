@@ -41,6 +41,9 @@ const splashVars = {
   "--greeting-easing": GREETING_EASING,
 } as CSSProperties
 
+// StrictMode remounts right away; a real unmount leaves this at zero.
+let mountedIntros = 0
+
 export function IntroProfile() {
   const rootRef = useRef<HTMLDivElement>(null)
   const backdropRef = useRef<HTMLDivElement>(null)
@@ -55,6 +58,7 @@ export function IntroProfile() {
     let cancelled = false
     let timer = 0
     let frame = 0
+    mountedIntros++
 
     const finish = () => {
       html.dataset.homeIntro = "done"
@@ -185,6 +189,12 @@ export function IntroProfile() {
       cancelled = true
       window.clearTimeout(timer)
       window.cancelAnimationFrame(frame)
+      mountedIntros--
+      window.setTimeout(() => {
+        // Leaving mid-intro must not leave the page covered or locked.
+        const state = html.dataset.homeIntro
+        if (mountedIntros === 0 && state && state !== "done") finish()
+      })
     }
   }, [])
 
