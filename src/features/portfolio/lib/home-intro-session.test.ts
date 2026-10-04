@@ -84,7 +84,7 @@ describe("getIntroTimeline", () => {
       { inMs: 260, outMs: 400 },
       { inMs: 400, outMs: 540 },
     ])
-    assert.equal(identityMs, 540)
+    assert.equal(identityMs, 600)
   })
 
   it("shows every greeting for the live timings", () => {
@@ -98,7 +98,7 @@ describe("getIntroTimeline", () => {
     for (const { inMs, outMs } of greetings) {
       assert.ok(outMs - inMs >= GREETING_FADE_MS + GREETING_HOLD_MS)
     }
-    assert.equal(identityMs, greetings.at(-1)?.outMs)
+    assert.equal(identityMs, (greetings.at(-1)?.outMs ?? 0) + GREETING_FADE_MS)
   })
 })
 

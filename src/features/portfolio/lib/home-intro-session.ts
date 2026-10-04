@@ -17,8 +17,8 @@ type ElementRect = {
 
 /**
  * When each greeting fades in and out, in ms from the first paint. Each one
- * fades in as the one before it fades out, and the identity line fades in as
- * the last greeting leaves.
+ * fades in as the one before it fades out. The identity line is laid out
+ * differently, so it waits until the last greeting has gone.
  */
 export function getIntroTimeline(
   greetingCount: number,
@@ -35,7 +35,7 @@ export function getIntroTimeline(
     atMs = outMs
   }
 
-  return { greetings, identityMs: atMs }
+  return { greetings, identityMs: atMs + fadeMs }
 }
 
 export function splitDisplayName(
