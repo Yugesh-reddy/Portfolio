@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai"
 
+import { createRedisCommand } from "@/lib/upstash"
 import { parseChatRequest } from "@/features/evee/lib/chat-contract"
 import { getPublicChatError } from "@/features/evee/lib/chat-errors"
 import {
@@ -11,12 +12,66 @@ import { createEveeSystemPrompt } from "@/features/evee/prompts/system-prompt"
 export const runtime = "nodejs"
 
 const REQUEST_TIMEOUT_MS = 25_000
+const RATE_LIMIT_MAX_REQUESTS = 20
+const RATE_LIMIT_WINDOW_SECONDS = 600
+const RATE_LIMIT_SCRIPT = `
+local current = redis.call('INCR', KEYS[1])
+if current == 1 then
+  redis.call('EXPIRE', KEYS[1], ARGV[1])
+end
+local ttl = redis.call('TTL', KEYS[1])
+return { current, ttl }
+`
+
+let cachedClient: { apiKey: string; ai: GoogleGenAI } | null = null
+
+function getGenAIClient(apiKey: string) {
+  if (cachedClient?.apiKey === apiKey) return cachedClient.ai
+  const ai = new GoogleGenAI({ apiKey })
+  cachedClient = { apiKey, ai }
+  return ai
+}
+
+function getClientIdentifier(request: Request) {
+  const forwarded = request.headers.get("x-forwarded-for")
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim()
+    if (first) return first
+  }
+  return request.headers.get("x-real-ip")?.trim() || "anonymous"
+}
+
+async function checkRateLimit(request: Request): Promise<number | null> {
+  const command = createRedisCommand(1500)
+  if (!command) return null
+  const key = `portfolio:chat:rl:${getClientIdentifier(request)}`
+  try {
+    const result = await command([
+      "EVAL",
+      RATE_LIMIT_SCRIPT,
+      1,
+      key,
+      RATE_LIMIT_WINDOW_SECONDS,
+    ])
+    if (!Array.isArray(result)) return null
+    const count = Number(result[0])
+    const ttl = Math.max(1, Number(result[1]) || RATE_LIMIT_WINDOW_SECONDS)
+    return count > RATE_LIMIT_MAX_REQUESTS ? ttl : null
+  } catch {
+    // Fail open if Redis is temporarily unreachable.
+    return null
+  }
+}
 
 type GeminiStream = Awaited<
   ReturnType<GoogleGenAI["models"]["generateContentStream"]>
 >
 
-function jsonError(message: string, status: number) {
+function jsonError(
+  message: string,
+  status: number,
+  extraHeaders?: Record<string, string>
+) {
   return Response.json(
     { error: message },
     {
@@ -24,6 +79,7 @@ function jsonError(message: string, status: number) {
       headers: {
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
+        ...extraHeaders,
       },
     }
   )
@@ -95,6 +151,15 @@ export async function POST(request: Request) {
     )
   }
 
+  const retryAfter = await checkRateLimit(request)
+  if (retryAfter !== null) {
+    return jsonError(
+      "You are sending messages too quickly. Please wait a bit and try again.",
+      429,
+      { "Retry-After": String(retryAfter) }
+    )
+  }
+
   const signal = AbortSignal.any([
     request.signal,
     AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -106,7 +171,7 @@ export async function POST(request: Request) {
   const systemInstruction = createEveeSystemPrompt(parsedRequest.data.messages)
 
   try {
-    const ai = new GoogleGenAI({ apiKey: apiKey.trim() })
+    const ai = getGenAIClient(apiKey.trim())
     const { iterator, text: firstText } = await startGeminiStream(
       ai,
       contents,

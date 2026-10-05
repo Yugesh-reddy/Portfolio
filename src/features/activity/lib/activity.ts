@@ -144,7 +144,7 @@ export function createActivityHandlers(options: Options) {
         return json(
           activityState(snapshot, now()),
           200,
-          "public, max-age=0, s-maxage=10"
+          "public, max-age=0, s-maxage=30, stale-while-revalidate=300"
         )
       } catch {
         return json({ status: "unavailable" }, 503)
