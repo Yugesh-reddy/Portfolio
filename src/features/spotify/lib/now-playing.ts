@@ -75,10 +75,22 @@ const memorySchema = z.object({
 })
 export type SpotifyMemory = z.infer<typeof memorySchema>
 
+const tokenCacheSchema = z.object({
+  token: z.string().min(1),
+  expiresAt: z.number().finite(),
+})
+export type CachedAccessToken = z.infer<typeof tokenCacheSchema>
+
 /** Where the memory lives: Redis in production, shared by every instance. */
 export type SpotifyStore = {
   read: () => Promise<unknown>
   write: (memory: SpotifyMemory) => Promise<unknown>
+  readToken?: () => Promise<unknown>
+  writeToken?: (
+    value: CachedAccessToken,
+    ttlSeconds: number
+  ) => Promise<unknown>
+  clearToken?: () => Promise<unknown>
 }
 
 let local: unknown = null
@@ -95,7 +107,13 @@ export async function getNowPlaying(
   {
     store = instanceStore,
     now = Date.now,
-  }: { store?: SpotifyStore; now?: () => number } = {}
+    schedule,
+  }: {
+    store?: SpotifyStore
+    now?: () => number
+    /** Defers non-critical persistence off the response path (e.g. Next.js `after`). */
+    schedule?: (work: () => Promise<unknown>) => void
+  } = {}
 ): Promise<NowPlaying> {
   const { clientId, clientSecret, refreshToken } = credentials
   if (!clientId || !clientSecret || !refreshToken)
@@ -107,10 +125,18 @@ export async function getNowPlaying(
     { clientId, clientSecret, refreshToken },
     fetcher,
     memory,
-    now()
+    now(),
+    store,
+    schedule
   )
-  if (JSON.stringify(memory) !== before)
-    await store.write(memory).catch(() => undefined)
+  if (JSON.stringify(memory) !== before) {
+    const persist = () => store.write(memory).catch(() => undefined)
+    if (schedule) {
+      schedule(persist)
+    } else {
+      await persist()
+    }
+  }
   return result
 }
 
@@ -118,11 +144,19 @@ async function poll(
   credentials: Required<Credentials>,
   fetcher: typeof fetch,
   memory: SpotifyMemory,
-  time: number
+  time: number,
+  store: SpotifyStore,
+  schedule?: (work: () => Promise<unknown>) => void
 ): Promise<NowPlaying> {
   if (time < (memory.retryAt?.playing ?? 0)) return remembered(memory)
   try {
-    const accessToken = await getAccessToken(credentials, fetcher, time)
+    const accessToken = await getAccessToken(
+      credentials,
+      fetcher,
+      time,
+      store,
+      schedule
+    )
     if (!accessToken) return { status: "unavailable" }
     const response = await fetcher(
       "https://api.spotify.com/v1/me/player/currently-playing",
@@ -136,7 +170,14 @@ async function poll(
       backOff(memory, "playing", response, time)
       return remembered(memory)
     }
-    if (response.status === 401) access = null
+    if (response.status === 401) {
+      access = null
+      if (store.clearToken) {
+        const clear = () => store.clearToken!().catch(() => undefined)
+        if (schedule) schedule(clear)
+        else await clear()
+      }
+    }
     if (response.status === 204)
       return getLastPlayed(fetcher, accessToken, memory, time)
     if (!response.ok) return { status: "unavailable" }
@@ -190,10 +231,25 @@ let access: { refreshToken: string; token: string; expiresAt: number } | null =
 async function getAccessToken(
   { clientId, clientSecret, refreshToken }: Required<Credentials>,
   fetcher: typeof fetch,
-  time: number
+  time: number,
+  store: SpotifyStore,
+  schedule?: (work: () => Promise<unknown>) => void
 ) {
   if (access?.refreshToken === refreshToken && time < access.expiresAt)
     return access.token
+  if (store.readToken) {
+    const stored = tokenCacheSchema.safeParse(
+      await store.readToken().catch(() => null)
+    )
+    if (stored.success && time < stored.data.expiresAt) {
+      access = {
+        refreshToken,
+        token: stored.data.token,
+        expiresAt: stored.data.expiresAt,
+      }
+      return stored.data.token
+    }
+  }
   const response = await fetcher("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
@@ -214,11 +270,25 @@ async function getAccessToken(
       expires_in: z.number().positive().optional(),
     })
     .parse(await response.json())
+  const ttlSeconds = Math.max(60, (token.expires_in ?? 3600) - 60)
+  const expiresAt = time + ttlSeconds * 1000
   access = {
     refreshToken,
     token: token.access_token,
     // A minute early, so a token never expires between check and use.
-    expiresAt: time + ((token.expires_in ?? 3600) - 60) * 1000,
+    expiresAt,
+  }
+  if (store.writeToken) {
+    const persistToken = () =>
+      store.writeToken!(
+        { token: token.access_token, expiresAt },
+        ttlSeconds
+      ).catch(() => undefined)
+    if (schedule) {
+      schedule(persistToken)
+    } else {
+      await persistToken()
+    }
   }
   return token.access_token
 }

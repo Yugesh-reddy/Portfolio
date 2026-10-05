@@ -397,3 +397,56 @@ test("rejects unexpected external links in track metadata", async () => {
     { status: "unavailable" }
   )
 })
+
+test("a shared store reuses cached OAuth tokens across cold starts and supports deferred writes", async () => {
+  const { __resetSpotifyMemory, getNowPlaying } = await import(modulePath.href)
+  let savedMemory = null
+  let savedToken = null
+  const deferred = []
+  const store = {
+    read: async () => savedMemory && JSON.parse(savedMemory),
+    write: async (memory) => {
+      savedMemory = JSON.stringify(memory)
+    },
+    readToken: async () => savedToken && JSON.parse(savedToken),
+    writeToken: async (value) => {
+      savedToken = JSON.stringify(value)
+    },
+    clearToken: async () => {
+      savedToken = null
+    },
+  }
+  const calls = {}
+  const now = Date.parse("2026-10-10T20:00:00Z")
+
+  __resetSpotifyMemory()
+  const first = await getNowPlaying(
+    credentials,
+    spotify(Response.json(track), null, calls),
+    {
+      store,
+      now: () => now,
+      schedule: (work) => {
+        deferred.push(work)
+      },
+    }
+  )
+  assert.equal(first.status, "playing")
+  assert.equal(calls.token, 1)
+  assert.equal(savedMemory, null)
+  assert.equal(savedToken, null)
+
+  await Promise.all(deferred.map((work) => work()))
+  assert.ok(savedMemory)
+  assert.ok(savedToken)
+
+  // Simulate a cold start on a fresh serverless instance.
+  __resetSpotifyMemory()
+  const second = await getNowPlaying(
+    credentials,
+    spotify(Response.json(track), null, calls),
+    { store, now: () => now + 60_000 }
+  )
+  assert.equal(second.status, "playing")
+  assert.equal(calls.token, 1)
+})

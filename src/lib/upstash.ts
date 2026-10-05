@@ -1,5 +1,5 @@
 /** Upstash Redis REST commands, or null when storage is not configured. */
-export function createRedisCommand() {
+export function createRedisCommand(timeoutMs = 5000) {
   // The Vercel Marketplace integration injects the KV_* names.
   const url = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL
   const token =
@@ -19,7 +19,7 @@ export function createRedisCommand() {
       },
       body: JSON.stringify(args),
       cache: "no-store",
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(timeoutMs),
     })
     if (!response.ok) throw Error("Redis unavailable")
     const payload = (await response.json()) as {
