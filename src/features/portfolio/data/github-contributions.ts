@@ -14,7 +14,9 @@ export const getGitHubContributions = unstable_cache(
     const apiUrl = process.env.GITHUB_CONTRIBUTIONS_API_URL
     if (!apiUrl) return []
     try {
-      const res = await fetch(`${apiUrl}/v4/${GITHUB_USERNAME}?y=last`)
+      const res = await fetch(`${apiUrl}/v4/${GITHUB_USERNAME}?y=last`, {
+        signal: AbortSignal.timeout(4_000),
+      })
       if (!res.ok) return []
       const data = (await res.json()) as GitHubContributionsResponse
       return data.contributions ?? []

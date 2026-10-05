@@ -1,18 +1,16 @@
-import dynamic from "next/dynamic"
+import { Suspense } from "react"
 import Link from "next/link"
 
-import { MAIN_NAV } from "@/config/site"
+import { MAIN_NAV, SOURCE_CODE_GITHUB_REPO } from "@/config/site"
 import { Separator } from "@/components/ui/separator"
+import { CommandMenu } from "@/components/command-menu"
+import { GitHubStars } from "@/components/github-stars"
 import { NavDesktop } from "@/components/nav-desktop"
 import { NavItemGitHub } from "@/components/nav-item-github"
 import { PixelMark } from "@/components/pixel-mark"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { getAllDocs } from "@/features/doc/data/documents"
 import type { DocPreview } from "@/features/doc/types/document"
-
-const CommandMenu = dynamic(() =>
-  import("@/components/command-menu").then((mod) => mod.CommandMenu)
-)
 
 export function SiteHeader() {
   const docs = getAllDocs()
@@ -48,7 +46,13 @@ export function SiteHeader() {
             orientation="vertical"
             className="mx-2 max-sm:hidden data-vertical:h-4 data-vertical:self-center"
           />
-          <NavItemGitHub />
+          <Suspense
+            fallback={
+              <GitHubStars repo={SOURCE_CODE_GITHUB_REPO} stargazersCount={0} />
+            }
+          >
+            <NavItemGitHub />
+          </Suspense>
           <Separator
             orientation="vertical"
             className="mx-2 data-vertical:h-4 data-vertical:self-center"
