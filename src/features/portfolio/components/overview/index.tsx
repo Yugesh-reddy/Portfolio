@@ -84,7 +84,7 @@ export function Overview() {
           <div className="pointer-events-none absolute top-px bottom-0 left-1/2 -z-1 w-px -translate-x-2.25 bg-[linear-gradient(to_bottom,var(--line)_4px,transparent_2px)] bg-size-[1px_6px] bg-repeat-y max-sm:hidden" />
 
           <HandwrittenNote
-            className="bottom-0 left-full ml-2 hidden w-16 flex-col items-start lg:flex"
+            className="bottom-0 left-full ml-6 hidden w-16 flex-col items-start lg:flex"
             aria-hidden
           >
             <HandwrittenArrow className="size-7 -rotate-90" />

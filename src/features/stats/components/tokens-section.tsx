@@ -3,6 +3,10 @@ import { IconInfoCircle } from "@tabler/icons-react"
 import { format, parseISO } from "date-fns"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  HandwrittenArrow,
+  HandwrittenNote,
+} from "@/features/portfolio/components/handwritten-note"
 
 import { getModelLogoUrl } from "../lib/provider-logo"
 import { getTokscaleInsights, TOKSCALE_PROFILE_URL } from "../lib/tokscale"
@@ -149,39 +153,51 @@ export async function TokensSection({
         </p>
       </div>
 
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-line ring-1 ring-line sm:grid-cols-3">
-        <Metric
-          label="Total Tokens"
-          value={stats.totalTokens}
-          valueFormat="compact"
-        />
-        <Metric
-          label="Input Tokens"
-          value={stats.inputTokens}
-          valueFormat="compact"
-        />
-        <Metric
-          label="Output Tokens"
-          value={stats.outputTokens}
-          valueFormat="compact"
-        />
-        <Metric
-          label="Total Cost"
-          value={stats.totalCost}
-          valueFormat="currency"
-        />
-        <Metric label="Active Days" value={stats.activeDays} />
-        <Metric
-          detail={
-            biggestDay
-              ? format(parseISO(biggestDay.date.slice(0, 10)), "dd MMM yyyy")
-              : undefined
-          }
-          label="Highest Cost Day"
-          value={biggestDay?.cost ?? 0}
-          valueFormat="currency"
-        />
-      </dl>
+      <div className="relative">
+        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-line ring-1 ring-line sm:grid-cols-3">
+          <Metric
+            label="Total Tokens"
+            value={stats.totalTokens}
+            valueFormat="compact"
+          />
+          <Metric
+            label="Input Tokens"
+            value={stats.inputTokens}
+            valueFormat="compact"
+          />
+          <Metric
+            label="Output Tokens"
+            value={stats.outputTokens}
+            valueFormat="compact"
+          />
+          <Metric
+            label="Total Cost"
+            value={stats.totalCost}
+            valueFormat="currency"
+          />
+          <Metric label="Active Days" value={stats.activeDays} />
+          <Metric
+            detail={
+              biggestDay
+                ? format(parseISO(biggestDay.date.slice(0, 10)), "dd MMM yyyy")
+                : undefined
+            }
+            label="Highest Cost Day"
+            value={biggestDay?.cost ?? 0}
+            valueFormat="currency"
+          />
+        </dl>
+
+        {embedded ? (
+          <HandwrittenNote
+            className="top-4 left-full ml-6 hidden w-32 flex-col items-start lg:flex"
+            aria-hidden
+          >
+            <span className="rotate-3">building with AI, measured</span>
+            <HandwrittenArrow className="mt-1 size-7 rotate-3" />
+          </HandwrittenNote>
+        ) : null}
+      </div>
 
       {hasDailyUsage ? (
         <div className="rounded-xl bg-background p-3 ring-1 ring-line sm:p-4">

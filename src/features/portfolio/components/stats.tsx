@@ -3,7 +3,6 @@ import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TokensSection } from "@/features/stats/components/tokens-section"
 
-import { HandwrittenArrow, HandwrittenNote } from "./handwritten-note"
 import { Panel, PanelHeader, PanelTitle } from "./panel"
 
 function StatsFallback() {
@@ -27,14 +26,6 @@ export function Stats() {
       <PanelHeader>
         <PanelTitle id="stats-title">Stats</PanelTitle>
       </PanelHeader>
-
-      <HandwrittenNote
-        className="top-6 left-full ml-2 hidden w-32 flex-col items-start lg:flex"
-        aria-hidden
-      >
-        <span className="rotate-3">building with AI, measured</span>
-        <HandwrittenArrow className="mt-1 size-7 rotate-3" />
-      </HandwrittenNote>
 
       <Suspense fallback={<StatsFallback />}>
         <TokensSection embedded />

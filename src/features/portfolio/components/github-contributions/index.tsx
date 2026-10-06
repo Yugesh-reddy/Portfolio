@@ -18,10 +18,10 @@ export function GitHubContributions() {
       </Suspense>
 
       <HandwrittenNote
-        className="top-8 left-full ml-2 hidden w-24 flex-col items-start lg:flex"
+        className="top-8 left-full ml-2 hidden w-28 flex-col items-start lg:flex"
         aria-hidden
       >
-        <span className="rotate-3">busy year</span>
+        <span className="rotate-3">brick by brick</span>
         <HandwrittenArrow className="mt-1 size-7 rotate-3" />
       </HandwrittenNote>
 

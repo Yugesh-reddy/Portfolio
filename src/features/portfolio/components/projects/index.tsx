@@ -25,7 +25,7 @@ export function Projects() {
       />
 
       <HandwrittenNote
-        className="top-6 left-full ml-2 hidden w-28 flex-col items-start lg:flex"
+        className="top-13 left-full ml-2 hidden w-28 flex-col items-start lg:flex"
         aria-hidden
       >
         <span className="rotate-3">stuff I built</span>
