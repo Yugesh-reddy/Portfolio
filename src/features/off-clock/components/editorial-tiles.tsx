@@ -46,6 +46,7 @@ export function WatchingTile({ className }: { className?: string }) {
                 alt={feature.imageAlt || feature.title}
                 fill
                 sizes="240px"
+                loading="lazy"
                 className={cn(styles.artwork, "object-cover object-top")}
               />
             ) : (
@@ -157,6 +158,7 @@ export function ChicagoTile({ className }: { className?: string }) {
                     alt={photo.alt}
                     fill
                     sizes="(min-width: 640px) 240px, 45vw"
+                    loading="lazy"
                     className={cn(styles.artwork, "object-cover")}
                   />
                 </div>

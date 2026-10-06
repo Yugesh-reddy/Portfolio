@@ -14,6 +14,11 @@ export function AvatarLights({
 }: Omit<React.ComponentProps<"div">, "children"> & {
   variants: AvatarLightsVariants
 }) {
+  const hasDistinctVariants =
+    variants.lightOn !== variants.lightOff ||
+    variants.darkOff !== variants.lightOff ||
+    variants.darkOn !== variants.lightOff
+
   return (
     <div
       className={cn(
@@ -25,34 +30,39 @@ export function AvatarLights({
       <div className="absolute inset-0">
         <AvatarImage
           src={variants.lightOff}
-          alt="Avatar with lights off in light mode"
+          alt={
+            hasDistinctVariants
+              ? "Avatar with lights off in light mode"
+              : "Avatar"
+          }
           fetchPriority="high"
         />
       </div>
 
-      <AvatarLayer className="in-[.light[data-avatar-lights=on]]:pointer-events-auto in-[.light[data-avatar-lights=on]]:opacity-100">
-        <AvatarImage
-          src={variants.lightOn}
-          alt="Avatar with lights on in light mode"
-          fetchPriority="high"
-        />
-      </AvatarLayer>
+      {hasDistinctVariants && (
+        <>
+          <AvatarLayer className="in-[.light[data-avatar-lights=on]]:pointer-events-auto in-[.light[data-avatar-lights=on]]:opacity-100">
+            <AvatarImage
+              src={variants.lightOn}
+              alt="Avatar with lights on in light mode"
+            />
+          </AvatarLayer>
 
-      <AvatarLayer className="in-[.dark[data-avatar-lights=off]]:pointer-events-auto in-[.dark[data-avatar-lights=off]]:opacity-100">
-        <AvatarImage
-          src={variants.darkOff}
-          alt="Avatar with lights off in dark mode"
-          fetchPriority="high"
-        />
-      </AvatarLayer>
+          <AvatarLayer className="in-[.dark[data-avatar-lights=off]]:pointer-events-auto in-[.dark[data-avatar-lights=off]]:opacity-100">
+            <AvatarImage
+              src={variants.darkOff}
+              alt="Avatar with lights off in dark mode"
+            />
+          </AvatarLayer>
 
-      <AvatarLayer className="in-[.dark[data-avatar-lights=on]]:pointer-events-auto in-[.dark[data-avatar-lights=on]]:opacity-100">
-        <AvatarImage
-          src={variants.darkOn}
-          alt="Avatar with lights on in dark mode"
-          fetchPriority="high"
-        />
-      </AvatarLayer>
+          <AvatarLayer className="in-[.dark[data-avatar-lights=on]]:pointer-events-auto in-[.dark[data-avatar-lights=on]]:opacity-100">
+            <AvatarImage
+              src={variants.darkOn}
+              alt="Avatar with lights on in dark mode"
+            />
+          </AvatarLayer>
+        </>
+      )}
     </div>
   )
 }
@@ -89,6 +99,9 @@ function AvatarImage({
       )}
       src={src}
       alt={alt}
+      width={160}
+      height={160}
+      decoding="async"
       {...props}
     />
   )

@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react"
 
-/** Poll only while the tile is visible, with bounded requests and full cleanup. */
+/**
+ * Load once the tile approaches the viewport, then poll only while it's near or
+ * inside the viewport, with bounded requests and full cleanup.
+ */
 export function useVisibleResource<T>(url: string, intervalMs: number) {
   const ref = useRef<HTMLDivElement>(null)
   const [data, setData] = useState<T | null>(null)
@@ -34,10 +37,13 @@ export function useVisibleResource<T>(url: string, intervalMs: number) {
         pending = undefined
       }
     }
-    const observer = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting
-      if (visible) void refresh()
-    })
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = entry.isIntersecting
+        if (visible) void refresh()
+      },
+      { rootMargin: "350px 0px" }
+    )
     if (ref.current) observer.observe(ref.current)
     const timer = setInterval(() => void refresh(), intervalMs)
     document.addEventListener("visibilitychange", refresh)

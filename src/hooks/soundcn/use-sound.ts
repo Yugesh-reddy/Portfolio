@@ -31,17 +31,13 @@ export function useSound(
   const sourceRef = useRef<AudioBufferSourceNode | null>(null)
   const gainRef = useRef<GainNode | null>(null)
   const bufferRef = useRef<AudioBuffer | null>(null)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
-    let cancelled = false
-    decodeAudioData(sound.dataUri).then((buffer) => {
-      if (!cancelled) {
-        bufferRef.current = buffer
-        setDuration(buffer.duration)
-      }
-    })
+    mountedRef.current = true
+    bufferRef.current = null
     return () => {
-      cancelled = true
+      mountedRef.current = false
     }
   }, [sound.dataUri])
 
@@ -60,40 +56,65 @@ export function useSound(
 
   const play = useCallback(
     (overrides?: { volume?: number; playbackRate?: number }) => {
-      if (!soundEnabled || !bufferRef.current) return
+      if (!soundEnabled) return
 
-      const ctx = getAudioContext()
+      const startPlayback = (buffer: AudioBuffer) => {
+        if (!mountedRef.current) return
+        const ctx = getAudioContext()
 
-      if (ctx.state === "suspended") {
-        ctx.resume()
+        if (ctx.state === "suspended") {
+          void ctx.resume()
+        }
+
+        if (interrupt && sourceRef.current) {
+          stop()
+        }
+
+        const source = ctx.createBufferSource()
+        const gain = ctx.createGain()
+
+        source.buffer = buffer
+        source.playbackRate.value = overrides?.playbackRate ?? playbackRate
+        gain.gain.value = overrides?.volume ?? volume
+
+        source.connect(gain)
+        gain.connect(ctx.destination)
+
+        source.onended = () => {
+          setIsPlaying(false)
+          onEnd?.()
+        }
+
+        source.start(0)
+        sourceRef.current = source
+        gainRef.current = gain
+        setIsPlaying(true)
+        onPlay?.()
       }
 
-      if (interrupt && sourceRef.current) {
-        stop()
+      if (bufferRef.current) {
+        startPlayback(bufferRef.current)
+        return
       }
 
-      const source = ctx.createBufferSource()
-      const gain = ctx.createGain()
-
-      source.buffer = bufferRef.current
-      source.playbackRate.value = overrides?.playbackRate ?? playbackRate
-      gain.gain.value = overrides?.volume ?? volume
-
-      source.connect(gain)
-      gain.connect(ctx.destination)
-
-      source.onended = () => {
-        setIsPlaying(false)
-        onEnd?.()
-      }
-
-      source.start(0)
-      sourceRef.current = source
-      gainRef.current = gain
-      setIsPlaying(true)
-      onPlay?.()
+      // Decode lazily on first play so page load never instantiates AudioContext.
+      void decodeAudioData(sound.dataUri).then((buffer) => {
+        if (!mountedRef.current) return
+        bufferRef.current = buffer
+        setDuration(buffer.duration)
+        startPlayback(buffer)
+      })
     },
-    [soundEnabled, playbackRate, volume, interrupt, stop, onPlay, onEnd]
+    [
+      soundEnabled,
+      sound.dataUri,
+      playbackRate,
+      volume,
+      interrupt,
+      stop,
+      onPlay,
+      onEnd,
+    ]
   )
 
   const pause = useCallback(() => {

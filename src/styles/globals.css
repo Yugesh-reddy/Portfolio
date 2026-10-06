@@ -118,7 +118,6 @@
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
   --font-handwritten: var(--font-caveat);
-  --font-pixel-square: var(--font-geist-pixel-square);
   --font-heading: var(--font-sans);
 
   --default-mono-font-feature-settings: "ss11" 1, "zero" 1, "tnum" 1;
@@ -254,7 +253,7 @@
   --_base: currentColor;
   --_highlight: var(
     --shimmer-color,
-    oklch(from currentColor l c h / calc(alpha * 0.2))
+    oklch(from currentColor l c h / calc(alpha* 0.2))
   );
 
   background-image: var(
@@ -358,10 +357,10 @@
 }
 
 /*
- * Scroll reveal for home sections (components/motion/reveal.tsx). The fade is
- * tied to scroll position instead of a JavaScript observer, so it runs on the
- * compositor and a section is never left invisible while the page is busy.
- * Written as longhands: the `animation` shorthand resets `animation-timeline`.
+ * Scroll reveal for home sections (components/motion/reveal.tsx). Sections
+ * below the fold wait hidden ("pending") and fade in on a timer once they
+ * scroll into view ("in"). The fade only touches opacity and transform, so the
+ * compositor runs it once it starts.
  */
 @keyframes reveal-in {
   from {
@@ -370,17 +369,43 @@
   }
 }
 
-@utility reveal {
-  @supports (animation-timeline: view()) {
-    animation-name: reveal-in;
-    animation-duration: auto;
-    /* easeOutCubic. Avoid linear(), which keeps Safari on the main thread. */
-    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
-    animation-fill-mode: both;
-    animation-timeline: view();
-    /* Fully shown once the section's top is 200px above the viewport bottom. */
-    animation-range: entry 0% entry 200px;
+@keyframes reveal-hold {
+  from,
+  to {
+    opacity: 0;
+    transform: translateY(14px);
   }
+}
+
+/*
+ * A pending section is hidden by a scroll-driven hold. The hold ends on the
+ * compositor once the section's top is 35vh into view, so a busy main thread
+ * that delays the observer can't leave the section blank. Keep in step with
+ * HOLD_ENDS_AT in reveal.tsx. Written as longhands: the `animation` shorthand
+ * resets `animation-timeline`.
+ */
+@supports (animation-timeline: view()) {
+  [data-reveal="pending"] {
+    animation-name: reveal-hold;
+    animation-duration: auto;
+    animation-fill-mode: backwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35vh;
+  }
+}
+
+@supports not (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal="pending"] {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+}
+
+/* Backwards fill only, so nothing lingers on the section once it has landed. */
+[data-reveal="in"] {
+  animation: reveal-in 600ms cubic-bezier(0.33, 1, 0.68, 1) backwards;
 }
 
 /* On-screen hero sections fade in on load, staggered by --reveal-delay. */
@@ -393,7 +418,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
+  [data-reveal],
   .reveal-on-load {
     animation: none;
   }
@@ -655,7 +680,11 @@ html[data-home-intro="landed"] {
   --chart-label: oklch(0.75 0.01 260);
 
   /* Between zinc-300 and zinc-50 — brighter than muted, softer than pure white */
-  --cursor-accent: color-mix(in oklab, var(--foreground) 72%, var(--muted-foreground));
+  --cursor-accent: color-mix(
+    in oklab,
+    var(--foreground) 72%,
+    var(--muted-foreground)
+  );
 }
 
 @layer base {

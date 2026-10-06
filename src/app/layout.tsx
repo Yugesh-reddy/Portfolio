@@ -1,8 +1,7 @@
 import "@/styles/globals.css"
 
-import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
-import Script from "next/script"
+import { Analytics } from "@vercel/analytics/next"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
 import type { WebSite, WithContext } from "schema-dts"
 
@@ -128,11 +127,6 @@ export default function RootLayout({
           type="text/javascript"
           dangerouslySetInnerHTML={{ __html: darkModeScript }}
         />
-        {/*
-          Thanks @tailwindcss. We inject the script via the `<Script/>` tag again,
-          since we found the regular `<script>` tag to not execute when rendering a not-found page.
-         */}
-        <Script src={`data:text/javascript;base64,${btoa(darkModeScript)}`} />
         <script
           type="text/javascript"
           dangerouslySetInnerHTML={{

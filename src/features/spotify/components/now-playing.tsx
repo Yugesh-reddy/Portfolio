@@ -175,6 +175,7 @@ function RecordDeck({
               width={96}
               height={96}
               unoptimized
+              loading="lazy"
               alt=""
               className={cn(artworkStyles.artwork, styles.label)}
             />
@@ -191,6 +192,7 @@ function RecordDeck({
             width={256}
             height={256}
             unoptimized
+            loading="lazy"
             alt={alt}
             className={artworkStyles.artwork}
           />

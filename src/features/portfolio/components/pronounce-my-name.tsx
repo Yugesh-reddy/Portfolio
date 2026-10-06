@@ -16,7 +16,7 @@ export function PronounceMyName({
   className?: string
   namePronunciationUrl: string
 }) {
-  const [play] = useSound(namePronunciationUrl)
+  const [play] = useSound(namePronunciationUrl, { lazy: true })
 
   const volumeIconRef = useRef<VolumeIconHandle>(null)
 
