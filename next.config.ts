@@ -76,7 +76,13 @@ const nextConfig: NextConfig = {
     ]
   },
   async redirects() {
-    return []
+    return [
+      {
+        source: "/stats",
+        destination: "/#stats",
+        permanent: true,
+      },
+    ]
   },
   async rewrites() {
     return [

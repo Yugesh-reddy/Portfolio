@@ -14,7 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // "/testimonials" is intentionally excluded: the page has no testimonials yet.
   // Add it back once TESTIMONIALS_1 / TESTIMONIALS_2 have entries.
-  const routes = ["", "/blog", "/stats", "/resume"].map((route) => ({
+  const routes = ["", "/blog", "/resume"].map((route) => ({
     url: `${SITE_INFO.url}${route}`,
     lastModified: new Date().toISOString(),
   }))

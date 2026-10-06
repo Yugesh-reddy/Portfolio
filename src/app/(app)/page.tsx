@@ -13,9 +13,9 @@ import { Experiences } from "@/features/portfolio/components/experiences"
 import { GitHubContributions } from "@/features/portfolio/components/github-contributions"
 import { IntroSection } from "@/features/portfolio/components/intro/intro-section"
 import { Overview } from "@/features/portfolio/components/overview"
-import { ProfileSummary } from "@/features/portfolio/components/profile-summary"
 import { Projects } from "@/features/portfolio/components/projects"
 import { SocialLinks } from "@/features/portfolio/components/social-links"
+import { Stats } from "@/features/portfolio/components/stats"
 import { TechStack } from "@/features/portfolio/components/tech-stack"
 import { USER } from "@/features/portfolio/data/user"
 
@@ -93,7 +93,10 @@ export default function HomePage() {
           <Bookmarks />
         </Reveal>
         <Separator />
-        <ProfileSummary />
+
+        <Reveal>
+          <Stats />
+        </Reveal>
         <AboutThisSite />
       </div>
     </>

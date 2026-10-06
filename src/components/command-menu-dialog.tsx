@@ -7,6 +7,7 @@ import {
   BookmarkIcon,
   BoxIcon,
   BriefcaseBusinessIcon,
+  ChartLineIcon,
   CircleCheckBigIcon,
   CornerDownLeftIcon,
   DownloadIcon,
@@ -114,6 +115,12 @@ const PORTFOLIO_LINKS: CommandLinkItem[] = [
     href: "/#bookmarks",
     kind: "page",
     icon: <BookmarkIcon />,
+  },
+  {
+    title: "Stats",
+    href: "/#stats",
+    kind: "page",
+    icon: <ChartLineIcon />,
   },
   {
     title: "Blog",

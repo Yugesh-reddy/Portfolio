@@ -9,7 +9,8 @@ import { getTokscaleInsights, TOKSCALE_PROFILE_URL } from "../lib/tokscale"
 import { getActiveTokscaleSeries } from "../lib/tokscale-parser"
 import { ProviderLogo } from "./provider-logo"
 import { TokenMetricValue } from "./token-metric-value"
-import { TokensChart, type TokensChartPoint } from "./tokens-chart"
+import type { TokensChartPoint } from "./tokens-chart"
+import { LazyTokensChart } from "./tokens-chart-lazy"
 
 const USD_FORMATTER = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -56,12 +57,23 @@ function Metric({
   )
 }
 
-export async function TokensSection() {
+export async function TokensSection({
+  embedded = false,
+}: {
+  embedded?: boolean
+} = {}) {
   const data = await getTokscaleInsights()
+  const Container = embedded ? "div" : "section"
+  const Heading = embedded ? "h3" : "h2"
+  const containerClassName = embedded
+    ? "space-y-4 p-4"
+    : "screen-line-top screen-line-bottom space-y-4 p-4"
 
   if (!data) {
     return (
-      <section className="screen-line-top screen-line-bottom p-4">
+      <Container
+        className={embedded ? "p-4" : "screen-line-top screen-line-bottom p-4"}
+      >
         <Alert>
           <AlertTitle>Token data is temporarily unavailable</AlertTitle>
           <AlertDescription>
@@ -77,7 +89,7 @@ export async function TokensSection() {
             .
           </AlertDescription>
         </Alert>
-      </section>
+      </Container>
     )
   }
 
@@ -98,11 +110,11 @@ export async function TokensSection() {
   }))
 
   return (
-    <section className="screen-line-top screen-line-bottom space-y-4 p-4">
+    <Container className={containerClassName}>
       <div>
-        <h2 className="font-heading text-lg font-medium tracking-tight">
+        <Heading className="font-heading text-lg font-medium tracking-tight">
           AI Token Usage
-        </h2>
+        </Heading>
         <p className="mt-1 max-w-xl text-sm text-muted-foreground">
           Usage from the coding agents and models I build with, synced from{" "}
           <a
@@ -183,7 +195,7 @@ export async function TokensSection() {
             aria-label={`Daily AI token usage from ${format(parseISO(data.startDate), "dd MMM yyyy")} to ${format(parseISO(data.endDate), "dd MMM yyyy")}`}
             role="img"
           >
-            <TokensChart data={chartData} />
+            <LazyTokensChart data={chartData} />
           </div>
           <div className="mt-3 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
@@ -294,6 +306,6 @@ export async function TokensSection() {
           </table>
         </div>
       ) : null}
-    </section>
+    </Container>
   )
 }
