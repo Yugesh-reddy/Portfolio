@@ -50,9 +50,9 @@ export const MOBILE_NAV: NavItem[] = [
 
 export const X_HANDLE = "@yugeshreddy"
 export const GITHUB_USERNAME = "yugesh-reddy"
-export const SOURCE_CODE_GITHUB_REPO = "yugesh-reddy/yugesh-portfolio"
+export const SOURCE_CODE_GITHUB_REPO = "Yugesh-reddy/Portfolio"
 export const SOURCE_CODE_GITHUB_URL =
-  "https://github.com/yugesh-reddy/yugesh-portfolio"
+  "https://github.com/Yugesh-reddy/Portfolio"
 
 export const UTM_PARAMS = {
   utm_source: "yugesh-portfolio",

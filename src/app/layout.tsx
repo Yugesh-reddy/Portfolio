@@ -2,6 +2,7 @@ import "@/styles/globals.css"
 
 import type { Metadata, Viewport } from "next"
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { NuqsAdapter } from "nuqs/adapters/next/app"
 import type { WebSite, WithContext } from "schema-dts"
 
@@ -151,6 +152,7 @@ export default function RootLayout({
           <NuqsAdapter>{children}</NuqsAdapter>
         </Providers>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

@@ -7,7 +7,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 const CACHE_TTL_MS = 30_000
-const ERROR_TTL_MS = 5_000
+const ERROR_TTL_MS = 60_000
 
 let cached: Awaited<ReturnType<typeof getNowPlaying>> | undefined
 let expiresAt = 0
@@ -41,7 +41,7 @@ export async function GET() {
   }
   const cacheControl =
     cached.status === "unavailable"
-      ? "no-store"
+      ? "public, max-age=0, s-maxage=60, stale-while-revalidate=300"
       : "public, max-age=0, s-maxage=30, stale-while-revalidate=300"
 
   return Response.json(cached, {
