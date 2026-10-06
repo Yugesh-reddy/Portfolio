@@ -1,7 +1,7 @@
 "use client"
 
 import { useId } from "react"
-import { motion, useReducedMotion, useSpring } from "motion/react"
+import { m, useReducedMotion, useSpring } from "motion/react"
 
 import {
   FOOTER_WORDMARK_VIEWBOX,
@@ -62,7 +62,7 @@ export function FooterWordmark() {
               />
             ))}
           </clipPath>
-          <motion.linearGradient
+          <m.linearGradient
             id={gradientId}
             x1={reduceMotion ? 1000 : gradientX}
             y1="77"
@@ -76,7 +76,7 @@ export function FooterWordmark() {
               stopOpacity="0"
             />
             <stop offset="1" stopColor="var(--foreground)" />
-          </motion.linearGradient>
+          </m.linearGradient>
         </defs>
 
         <use href={`#${letterId}`} className={styles.letterOutlines} />

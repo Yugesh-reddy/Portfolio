@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from "react"
 import { CheckIcon, CircleXIcon, CopyIcon } from "lucide-react"
-import { motion } from "motion/react"
+import { m } from "motion/react"
 
 import type { CopyState } from "@/hooks/use-copy-to-clipboard"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
@@ -30,7 +30,7 @@ export function CopyStateIcon({
 }: CopyStateIconProps) {
   return (
     <IconSwap>
-      <IconSwapItem key={state} as={motion.span}>
+      <IconSwapItem key={state} as={m.span}>
         {state === "idle" && (idleIcon ?? <CopyIcon data-slot="idle-icon" />)}
 
         {state === "done" && (doneIcon ?? <CheckIcon data-slot="done-icon" />)}

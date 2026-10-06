@@ -3,7 +3,7 @@
 import { useEffect, useId, useRef } from "react"
 import type { Transition } from "motion/react"
 import {
-  motion,
+  m,
   useInView,
   useMotionValue,
   useReducedMotion,
@@ -84,7 +84,7 @@ export function SpotlightLogo({ className }: { className?: string }) {
   }, [shouldReduceMotion, isInView, mouseX, mouseY])
 
   return (
-    <motion.svg
+    <m.svg
       ref={ref}
       className={cn(
         "h-auto w-full touch-manipulation overflow-visible [--pattern:color-mix(in_oklab,var(--foreground)_12%,var(--background))] [--stroke:color-mix(in_oklab,var(--foreground)_16%,var(--background))] dark:[--pattern:color-mix(in_oklab,var(--foreground)_22%,var(--background))] dark:[--stroke:color-mix(in_oklab,var(--foreground)_28%,var(--background))]",
@@ -115,7 +115,7 @@ export function SpotlightLogo({ className }: { className?: string }) {
           />
         </pattern>
 
-        <motion.g
+        <m.g
           id={ids.faceFill}
           variants={{
             normal: { transform: "translate(0px, 0px)" },
@@ -126,9 +126,9 @@ export function SpotlightLogo({ className }: { className?: string }) {
           {ysMarkPaths.topFaces.map((d) => (
             <path key={d} d={d} />
           ))}
-        </motion.g>
+        </m.g>
 
-        <motion.path
+        <m.path
           id={ids.strokeUnder}
           d={ysMarkPaths.strokesUnder.normal}
           variants={{
@@ -138,7 +138,7 @@ export function SpotlightLogo({ className }: { className?: string }) {
           transition={transition}
         />
 
-        <motion.path
+        <m.path
           id={ids.strokeTop}
           d={ysMarkPaths.strokesTop.normal}
           variants={{
@@ -148,7 +148,7 @@ export function SpotlightLogo({ className }: { className?: string }) {
           transition={transition}
         />
 
-        <motion.radialGradient
+        <m.radialGradient
           id={ids.radialGradient}
           cx={cx}
           cy={cy}
@@ -165,7 +165,7 @@ export function SpotlightLogo({ className }: { className?: string }) {
             stopColor="var(--color-zinc-400)"
             stopOpacity="0"
           />
-        </motion.radialGradient>
+        </m.radialGradient>
       </defs>
 
       {/* Iso-axis construction guides — same dash recipe as CD */}
@@ -181,7 +181,7 @@ export function SpotlightLogo({ className }: { className?: string }) {
 
       <g className="fill-background" fillRule="evenodd" clipRule="evenodd">
         {ysMarkPaths.sideFaces.normal.map((d, index) => (
-          <motion.path
+          <m.path
             key={d}
             d={d}
             variants={{
@@ -218,6 +218,6 @@ export function SpotlightLogo({ className }: { className?: string }) {
         stroke={`url(#${ids.radialGradient})`}
         strokeWidth={parityMetrics.strokeWidth}
       />
-    </motion.svg>
+    </m.svg>
   )
 }

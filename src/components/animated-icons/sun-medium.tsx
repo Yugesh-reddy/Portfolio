@@ -3,7 +3,7 @@
 import type { HTMLAttributes } from "react"
 import { forwardRef, useCallback, useImperativeHandle, useRef } from "react"
 import type { Variants } from "motion/react"
-import { motion, useAnimation } from "motion/react"
+import { m, useAnimation } from "motion/react"
 
 import { cn } from "@/lib/utils"
 
@@ -89,7 +89,7 @@ const SunMediumIcon = forwardRef<SunMediumIconHandle, SunMediumIconProps>(
             "m5.636 5.636.707.707",
             "m17.657 17.657.707.707",
           ].map((d, index) => (
-            <motion.path
+            <m.path
               key={d}
               d={d}
               animate={controls}

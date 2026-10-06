@@ -2,7 +2,7 @@
 
 import { Children, useEffect, useState } from "react"
 import type { Transition, Variants } from "motion/react"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, m } from "motion/react"
 
 import { cn } from "@/lib/utils"
 
@@ -12,12 +12,12 @@ const defaultVariants: Variants = {
   exit: { y: 8, opacity: 0 },
 }
 
-type MotionElement = typeof motion.p | typeof motion.span | typeof motion.code
+type MotionElement = typeof m.p | typeof m.span | typeof m.code
 
 export type TextFlipProps = {
   /**
    * Motion element to render.
-   * @defaultValue motion.p
+   * @defaultValue m.p
    * */
   as?: MotionElement
   className?: string
@@ -45,7 +45,7 @@ export type TextFlipProps = {
 }
 
 export function TextFlip({
-  as: Component = motion.p,
+  as: Component = m.p,
   className,
   children,
 

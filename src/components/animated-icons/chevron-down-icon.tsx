@@ -1,7 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle } from "react"
-import { motion, useAnimation } from "motion/react"
+import { m, useAnimation } from "motion/react"
 
 export type ChevronDownIconHandle = {
   startAnimation: () => void
@@ -37,7 +37,7 @@ const ChevronDownIcon = forwardRef<ChevronDownIconHandle, ChevronDownIconProps>(
         aria-hidden
         {...props}
       >
-        <motion.path
+        <m.path
           d="M6 9L12 15L18 9"
           variants={{
             normal: {

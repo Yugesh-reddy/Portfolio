@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, m } from "motion/react"
 
 export interface VolumeIconHandle {
   startAnimation: () => void
@@ -46,12 +46,12 @@ const VolumeIcon = forwardRef<VolumeIconHandle, React.ComponentProps<"svg">>(
         <AnimatePresence initial={false} mode="wait">
           {isHovered ? (
             <Fragment key="volume-icon-active">
-              <motion.path
+              <m.path
                 animate={{ opacity: 1, transition: { delay: 0.1 } }}
                 d="M16 9a5 5 0 0 1 0 6"
                 initial={{ opacity: 0 }}
               />
-              <motion.path
+              <m.path
                 animate={{ opacity: 1, transition: { delay: 0.2 } }}
                 d="M19.364 18.364a9 9 0 0 0 0-12.728"
                 initial={{ opacity: 0 }}

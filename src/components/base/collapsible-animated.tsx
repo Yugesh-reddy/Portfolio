@@ -2,13 +2,13 @@
 
 import {
   createContext,
-  type ReactNode,
   useContext,
   useEffect,
   useRef,
   useState,
+  type ReactNode,
 } from "react"
-import { motion, useReducedMotion } from "motion/react"
+import { m, useReducedMotion } from "motion/react"
 
 import { cn } from "@/lib/utils"
 import type {
@@ -117,7 +117,7 @@ function CollapsiblePanel({
   const reduceMotion = useReducedMotion()
 
   return (
-    <motion.div
+    <m.div
       data-slot="collapsible-panel"
       className={cn("overflow-hidden", className)}
       initial={false}
@@ -134,7 +134,7 @@ function CollapsiblePanel({
       aria-hidden={!open}
     >
       {children}
-    </motion.div>
+    </m.div>
   )
 }
 
