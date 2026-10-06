@@ -82,6 +82,14 @@ const THEME = cn(
   'data-[level="4"]:fill-muted-foreground/80'
 )
 
+const CALENDAR_THEME = cn(
+  '[&_rect[data-level="0"]]:fill-muted-foreground/5',
+  '[&_rect[data-level="1"]]:fill-muted-foreground/20',
+  '[&_rect[data-level="2"]]:fill-muted-foreground/40',
+  '[&_rect[data-level="3"]]:fill-muted-foreground/60',
+  '[&_rect[data-level="4"]]:fill-muted-foreground/80'
+)
+
 type ContributionGraphContextType = {
   data: Activity[]
   weeks: Week[]
@@ -334,7 +342,7 @@ export const ContributionGraphBlock = ({
 
   return (
     <rect
-      className={cn(THEME, className)}
+      className={className}
       data-count={activity.count}
       data-date={activity.date}
       data-level={activity.level}
@@ -383,7 +391,7 @@ export const ContributionGraphCalendar = ({
       {...props}
     >
       <svg
-        className="block overflow-visible"
+        className={cn("block overflow-visible", CALENDAR_THEME)}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         width={width}

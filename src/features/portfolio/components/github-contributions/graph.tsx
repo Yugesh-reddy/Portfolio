@@ -1,14 +1,10 @@
 "use client"
 
-import { use } from "react"
+import { use, useCallback, useState } from "react"
 import { LoaderIcon } from "lucide-react"
 
 import { formatDate } from "@/lib/format-date"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/base/ui/tooltip"
+import { Tooltip, TooltipContent } from "@/components/base/ui/tooltip"
 import type { Activity } from "@/registry/components/contribution-graph"
 import {
   ContributionGraph,
@@ -19,12 +15,37 @@ import {
   ContributionGraphTotalCount,
 } from "@/registry/components/contribution-graph"
 
+type HoveredBlock = {
+  element: SVGRectElement
+  date: string
+  count: number
+}
+
 export function GitHubContributionGraph({
   contributions,
 }: {
   contributions: Promise<Activity[]>
 }) {
   const data = use(contributions)
+  const [hovered, setHovered] = useState<HoveredBlock | null>(null)
+
+  const handlePointerOver = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const target = event.target
+      if (!(target instanceof SVGRectElement)) return
+      const date = target.dataset.date
+      const count = Number(target.dataset.count)
+      if (!date || Number.isNaN(count)) return
+      setHovered((prev) =>
+        prev?.element === target ? prev : { element: target, date, count }
+      )
+    },
+    []
+  )
+
+  const handlePointerLeave = useCallback(() => {
+    setHovered(null)
+  }, [])
 
   return (
     <ContributionGraph
@@ -39,29 +60,28 @@ export function GitHubContributionGraph({
         className="px-4 **:data-[slot=month-labels]:text-muted-foreground min-[800px]:no-scrollbar"
         title="GitHub Contributions"
         aria-hidden
+        onPointerOver={handlePointerOver}
+        onPointerLeave={handlePointerLeave}
       >
         {({ activity, dayIndex, weekIndex }) => (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <g>
-                  <ContributionGraphBlock
-                    activity={activity}
-                    dayIndex={dayIndex}
-                    weekIndex={weekIndex}
-                  />
-                </g>
-              }
-            />
-            <TooltipContent className="font-sans">
-              <p>
-                {activity.count} contribution{activity.count > 1 ? "s" : null}{" "}
-                on {formatDate(activity.date)}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+          <ContributionGraphBlock
+            activity={activity}
+            dayIndex={dayIndex}
+            weekIndex={weekIndex}
+          />
         )}
       </ContributionGraphCalendar>
+
+      <Tooltip open={Boolean(hovered)}>
+        {hovered ? (
+          <TooltipContent anchor={hovered.element} className="font-sans">
+            <p>
+              {hovered.count} contribution{hovered.count > 1 ? "s" : null} on{" "}
+              {formatDate(hovered.date)}
+            </p>
+          </TooltipContent>
+        ) : null}
+      </Tooltip>
 
       <ContributionGraphFooter className="gap-4 px-4 leading-none">
         <ContributionGraphTotalCount>
